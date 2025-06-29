@@ -29,8 +29,14 @@ onMounted(() => {
         title="Películas recomendadas"
         :items="movieList"
         show-rating
+        type="movie" 
       />
-      <CardSection title="Series destacadas" :items="seriesList" show-rating />
+      <CardSection
+        title="Series destacadas"
+        :items="seriesList"
+        show-rating
+        type="series"
+      />
     </div>
   </div>
 </template>

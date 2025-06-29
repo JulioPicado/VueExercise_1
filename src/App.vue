@@ -14,11 +14,11 @@ import HeaderMenu from "./components/HeaderMenu.vue";
     </main>
 
     <footer class="bg-gray-800 p-4">
-      <nav class="flex justify-around items-center">
+      <nav class="flex justify-between w-full items-center">
         <!-- Enlaces de navegación con router-link -->
         <router-link
           to="/"
-          class="flex justify-between w-20 items-center text-sm"
+          class="flex gap-2 justify-between items-center text-sm"
           active-class="text-purple-400"
           exact-active-class="text-purple-400"
         >
@@ -33,19 +33,51 @@ import HeaderMenu from "./components/HeaderMenu.vue";
         </router-link>
 
         <router-link
-          to="/details/123"
-          class="flex justify-between w-25 items-center text-sm"
+          to="/"
+          class="flex gap-2 justify-between items-center text-sm"
           active-class="text-purple-400"
           exact-active-class="text-purple-400"
         >
           <div
             :class="{
               'w-6 h-6 rounded-full mb-1': true,
-              'bg-purple-400': $route.path.startsWith('/details/'),
-              'bg-gray-600': !$route.path.startsWith('/details/'),
+              'bg-purple-400': $route.path === '/',
+              'bg-gray-600': $route.path !== '/',
             }"
           ></div>
-          Favoritos
+          Pendientes
+        </router-link>
+
+        <router-link
+          to="/"
+          class="flex gap-2 justify-between items-center text-sm"
+          active-class="text-purple-400"
+          exact-active-class="text-purple-400"
+        >
+          <div
+            :class="{
+              'w-6 h-6 rounded-full mb-1': true,
+              'bg-purple-400': $route.path === '/',
+              'bg-gray-600': $route.path !== '/',
+            }"
+          ></div>
+          Favoritas
+        </router-link>
+
+        <router-link
+          to="/"
+          class="flex gap-2 justify-center  items-center text-sm"
+          active-class="text-purple-400"
+          exact-active-class="text-purple-400"
+        >
+          <div
+            :class="{
+              'w-6 h-6 rounded-full mb-1': true,
+              'bg-purple-400': $route.path === '/',
+              'bg-gray-600': $route.path !== '/',
+            }"
+          ></div>
+          Vistas
         </router-link>
       </nav>
     </footer>

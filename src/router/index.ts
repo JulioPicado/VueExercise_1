@@ -1,21 +1,26 @@
 import { createRouter, createWebHistory } from "vue-router";
-import HomeView from "../view/Home.vue"; // <--- Importa HomeView como la vista principal
-import MovieDetails from "../view/MovieDetails.vue"; // Asegúrate que la ruta sea correcta
-
+import Home from "../view/Home.vue";
+import MovieDetails from "../view/MovieDetails.vue";
+import SeriesDetails from "../view/SeriesDetails.vue";
 const routes = [
   {
-    path: "/", // La ruta raíz
+    path: "/",
     name: "Home",
-    component: HomeView, // <--- Ahora apunta a HomeView
+    component: Home,
   },
   {
-    path: "/details/:id",
+    path: "/movie/:id",
     name: "MovieDetails",
     component: MovieDetails,
-    props: true, // Esto permite pasar el parámetro de la ruta como prop al componente
+    props: true,
+  },
+  {
+    path: "/series/:id",
+    name: "SeriesDetails",
+    component: SeriesDetails,
+    props: true,
   },
 ];
-
 const router = createRouter({
   history: createWebHistory(),
   routes,

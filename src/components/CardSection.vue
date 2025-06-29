@@ -1,27 +1,78 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref } from "vue";
+import { useRouter } from "vue-router";
 
-// Define las props que este componente espera recibir
-const props = defineProps({
-  title: {
-    type: String,
-    required: true,
-  },
-  items: {
-    type: Array,
-    required: true,
-  },
-  showRating: {
-    type: Boolean,
-    default: false,
-  },
-});
+const { title, items, type } = defineProps<{
+  title: string;
+  items: any[];
+  type: "movie" | "series";
+}>();
+
+const router = useRouter(); 
+const scrollContainer = ref<HTMLElement | null>(null);
+
+// Funciones para controlar el desplazamiento
+const scrollLeft = () => {
+  if (scrollContainer.value) {
+    scrollContainer.value.scrollBy({ left: -320, behavior: "smooth" });
+  }
+};
+
+const scrollRight = () => {
+  if (scrollContainer.value) {
+    scrollContainer.value.scrollBy({ left: 320, behavior: "smooth" });
+  }
+};
+
+// Función para navegar, ahora con lógica condicional
+const goToDetails = (id: number, contentType: "movie" | "series") => {
+  const routeName = contentType === "movie" ? "MovieDetails" : "SeriesDetails";
+  router.push({ name: routeName, params: { id: id } }); 
+};
 </script>
 
 <template>
   <section class="mb-8">
     <div class="flex justify-between items-center mb-4 relative">
+      <button
+        @click="scrollLeft"
+        class="text-gray-400 p-2 rounded-full hover:bg-gray-700 transition-colors"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+      </button>
+
       <h2 class="text-xl font-bold text-white">{{ title }}</h2>
+
+      <button
+        @click="scrollRight"
+        class="text-gray-400 p-2 rounded-full hover:bg-gray-700 transition-colors"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 5l7 7-7 7"
+          />
+        </svg>
+      </button>
     </div>
     <div
       ref="scrollContainer"
@@ -30,7 +81,8 @@ const props = defineProps({
       <div
         v-for="item in items"
         :key="item.id"
-        class="flex-shrink-0 w-32 md:w-40"
+        class="flex-shrink-0 w-32 md:w-40 cursor-pointer"
+        @click="goToDetails(item.id, type)"
       >
         <div
           class="relative w-32 h-48 md:w-40 md:h-60 rounded-lg overflow-hidden bg-gray-700 mb-2"
@@ -49,7 +101,9 @@ const props = defineProps({
           </div>
         </div>
         <div class="text-center">
-          <p class="text-sm font-medium text-white truncate">{{ item.name }}</p>
+          <p class="text-sm font-medium text-white truncate">
+            {{ item.name }}
+          </p>
           <p class="text-xs text-gray-400">{{ item.year }}</p>
         </div>
       </div>
@@ -58,12 +112,12 @@ const props = defineProps({
 </template>
 
 <style scoped>
-/* Oculta la barra de desplazamiento horizontal */
+/* Oculta scroll en todos los navegadores modernos */
 .scrollbar-hidden::-webkit-scrollbar {
-  display: none;
+  display: none; /* Safari y Chrome */
 }
 .scrollbar-hidden {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
 }
 </style>
