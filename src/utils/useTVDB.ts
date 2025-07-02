@@ -5,6 +5,10 @@ export function useTVDB() {
   const apiKey = import.meta.env.VITE_THE_TVDB_API_KEY;
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
+  // Log para depuración
+  console.log('API BASE URL:', apiBaseUrl);
+  console.log('API KEY:', apiKey);
+
   const movieList = ref([]);
   const seriesList = ref([]);
   const loading = ref(true); // Indica si las listas principales están cargando
@@ -117,6 +121,10 @@ export function useTVDB() {
 
   const loginAndFetchContent = async () => {
     try {
+      // Validar que apiBaseUrl y apiKey existen
+      if (!apiBaseUrl || !apiKey) {
+        throw new Error('API base URL o API key no definida.');
+      }
       const loginRes = await fetch(`${apiBaseUrl}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -124,8 +132,15 @@ export function useTVDB() {
       });
 
       if (!loginRes.ok) {
-        const err = await loginRes.json();
-        throw new Error(`Login: ${err.message}`);
+        // Intenta leer el error como JSON, pero si falla, muestra el texto plano
+        let errMsg = '';
+        try {
+          const err = await loginRes.json();
+          errMsg = err.message;
+        } catch (e) {
+          errMsg = await loginRes.text();
+        }
+        throw new Error(`Login: ${errMsg}`);
       }
 
       const loginData = await loginRes.json();
@@ -145,64 +160,121 @@ export function useTVDB() {
     }
   };
 
- // Agrega esta función en tu archivo useTVDB.ts
-const fetchSeriesDetails = async (seriesId: number | string) => {
-  if (!token.value) {
-    console.warn("fetchSeriesDetails llamado sin token. Esperando token...");
-    return null;
-  }
+  const fetchSeriesDetails = async (seriesId: number | string) => {
+    if (!token.value) {
+      console.warn("fetchSeriesDetails llamado sin token. Esperando token...");
+      return null;
+    }
 
-  try {
-    const res = await fetch(
-      `${apiBaseUrl}/series/${seriesId}/extended?meta=translations&short=true`,
-      {
+    try {
+      const res = await fetch(
+        `${apiBaseUrl}/series/${seriesId}/extended?meta=translations&short=true`,
+        {
+          headers: {
+            Authorization: `Bearer ${token.value}`,
+            accept: "application/json",
+          },
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(
+          `Detalles de serie: ${err.message} (Status: ${res.status})`
+        );
+      }
+
+      const json = await res.json();
+      const serieDetail = json.data;
+
+      if (serieDetail.image) {
+        serieDetail.image = getFullImageUrl(serieDetail.image);
+      }
+
+      if (serieDetail.artworks && serieDetail.artworks.length > 0) {
+        serieDetail.artworks = serieDetail.artworks.map((artwork: any) => ({
+          ...artwork,
+          image: getFullImageUrl(artwork.image),
+          thumbnail: getFullImageUrl(artwork.thumbnail),
+        }));
+      }
+
+      return serieDetail;
+    } catch (err) {
+      console.error("Error al obtener detalles de la serie:", err);
+      throw err;
+    }
+  };
+
+  const searchShows = async (query: string) => {
+    if (!token.value) {
+      console.warn("searchShows llamado sin token. Esperando token...");
+      return { movies: [], series: [] };
+    }
+
+    if (!query.trim()) {
+      return { movies: [], series: [] };
+    }
+
+    try {
+      // Buscar películas
+      const moviesRes = await fetch(`${apiBaseUrl}/search?query=${encodeURIComponent(query)}&type=movie`, {
         headers: {
           Authorization: `Bearer ${token.value}`,
           accept: "application/json",
         },
+      });
+
+      // Buscar series
+      const seriesRes = await fetch(`${apiBaseUrl}/search?query=${encodeURIComponent(query)}&type=series`, {
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+          accept: "application/json",
+        },
+      });
+
+      let movies = [];
+      let series = [];
+
+      if (moviesRes.ok) {
+        const moviesData = await moviesRes.json();
+        movies = moviesData.data
+          .slice(0, 10)
+          .map((movie: any) => ({
+            ...movie,
+            image: movie.image ? getFullImageUrl(movie.image) : null,
+            type: "movie",
+          }));
       }
-    );
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(
-        `Detalles de serie: ${err.message} (Status: ${res.status})`
-      );
+      if (seriesRes.ok) {
+        const seriesData = await seriesRes.json();
+        series = seriesData.data
+          .slice(0, 10)
+          .map((serie: any) => ({
+            ...serie,
+            image: serie.image ? getFullImageUrl(serie.image) : null,
+            type: "series",
+          }));
+      }
+
+      return { movies, series };
+    } catch (err) {
+      console.error("Error al buscar shows:", err);
+      return { movies: [], series: [] };
     }
+  };
 
-    const json = await res.json();
-    const serieDetail = json.data;
-
-    if (serieDetail.image) {
-      serieDetail.image = getFullImageUrl(serieDetail.image);
-    }
-
-    if (serieDetail.artworks && serieDetail.artworks.length > 0) {
-      serieDetail.artworks = serieDetail.artworks.map((artwork: any) => ({
-        ...artwork,
-        image: getFullImageUrl(artwork.image),
-        thumbnail: getFullImageUrl(artwork.thumbnail),
-      }));
-    }
-
-    return serieDetail;
-  } catch (err) {
-    console.error("Error al obtener detalles de la serie:", err);
-    throw err;
-  }
-};
-
-// No olvides retornarlo al final de useTVDB
-return {
-  movieList,
-  seriesList,
-  loading,
-  error,
-  token,
-  isAuthenticated,
-  loginAndFetchContent,
-  fetchMovieDetails,
-  fetchSeriesDetails,
-};
-
+  return {
+    movieList,
+    seriesList,
+    loading,
+    error,
+    token,
+    isAuthenticated,
+    loginAndFetchContent,
+    fetchMovieDetails,
+    fetchSeriesDetails,
+    searchShows,
+  };
 }

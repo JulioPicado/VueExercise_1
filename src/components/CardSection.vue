@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { useUserStore } from "../stores/userStore";
+import type { Show } from "../stores/userStore";
 
 const { title, items, type } = defineProps<{
   title: string;
@@ -9,6 +11,7 @@ const { title, items, type } = defineProps<{
 }>();
 
 const router = useRouter(); 
+const userStore = useUserStore();
 const scrollContainer = ref<HTMLElement | null>(null);
 
 // Funciones para controlar el desplazamiento
@@ -28,6 +31,52 @@ const scrollRight = () => {
 const goToDetails = (id: number, contentType: "movie" | "series") => {
   const routeName = contentType === "movie" ? "MovieDetails" : "SeriesDetails";
   router.push({ name: routeName, params: { id: id } }); 
+};
+
+// Funciones para manejar las listas del usuario
+const addToFavorites = (item: any) => {
+  const show: Show = {
+    id: item.id,
+    name: item.name,
+    image: item.image,
+    type: type,
+    year: item.year
+  };
+  userStore.addToFavorites(show);
+};
+
+const addToWatchlist = (item: any) => {
+  const show: Show = {
+    id: item.id,
+    name: item.name,
+    image: item.image,
+    type: type,
+    year: item.year
+  };
+  userStore.addToWatchlist(show);
+};
+
+const addToWatched = (item: any) => {
+  const show: Show = {
+    id: item.id,
+    name: item.name,
+    image: item.image,
+    type: type,
+    year: item.year
+  };
+  userStore.addToWatched(show);
+};
+
+const isFavorite = (item: any) => {
+  return userStore.isFavorite(item.id, type);
+};
+
+const isInWatchlist = (item: any) => {
+  return userStore.isInWatchlist(item.id, type);
+};
+
+const isWatched = (item: any) => {
+  return userStore.isWatched(item.id, type);
 };
 </script>
 
@@ -81,7 +130,7 @@ const goToDetails = (id: number, contentType: "movie" | "series") => {
       <div
         v-for="item in items"
         :key="item.id"
-        class="flex-shrink-0 w-32 md:w-40 cursor-pointer"
+        class="flex-shrink-0 w-32 md:w-40 cursor-pointer group"
         @click="goToDetails(item.id, type)"
       >
         <div
@@ -98,6 +147,48 @@ const goToDetails = (id: number, contentType: "movie" | "series") => {
             class="w-full h-full bg-gray-600 flex items-center justify-center text-gray-400"
           >
             No image
+          </div>
+          
+          <!-- Botones de interacción -->
+          <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+            <div class="flex space-x-2">
+              <button
+                @click.stop="addToFavorites(item)"
+                :class="[
+                  'p-2 rounded-full transition-colors',
+                  isFavorite(item) 
+                    ? 'bg-red-600 text-white' 
+                    : 'bg-gray-800 text-gray-300 hover:bg-red-600 hover:text-white'
+                ]"
+                :title="isFavorite(item) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
+              >
+                ❤️
+              </button>
+              <button
+                @click.stop="addToWatchlist(item)"
+                :class="[
+                  'p-2 rounded-full transition-colors',
+                  isInWatchlist(item) 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-800 text-gray-300 hover:bg-blue-600 hover:text-white'
+                ]"
+                :title="isInWatchlist(item) ? 'Quitar de watchlist' : 'Agregar a watchlist'"
+              >
+                📺
+              </button>
+              <button
+                @click.stop="addToWatched(item)"
+                :class="[
+                  'p-2 rounded-full transition-colors',
+                  isWatched(item) 
+                    ? 'bg-green-600 text-white' 
+                    : 'bg-gray-800 text-gray-300 hover:bg-green-600 hover:text-white'
+                ]"
+                :title="isWatched(item) ? 'Quitar de vistas' : 'Marcar como vista'"
+              >
+                ✅
+              </button>
+            </div>
           </div>
         </div>
         <div class="text-center">

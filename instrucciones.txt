@@ -1,0 +1,13 @@
+Para la entrega del proyecto final el grupo escogerá entre cada diseño de sus integrantes y seleccionará el que más le guste. 
+Para el proyecto final se debe realizar los siguientes requerimientos:
+Se realizará mediante el framework de Vue (migrar la plantilla de html, css)
+Se debe realizar la funcionalidad del buscador. 
+Implementar las funcionalidades Watchlist, Watched, Favorites, asegurándose que al refrescar la página los shows del usuario se mantengan en la sección mencionada. 
+Se le agregara la interactividad necesaria, es decir poder navegar entre sus pantallas. 
+Debe utilizar Turso para el manejo de usuarios y favoritos
+Debe utilizar Pinia para el manejo de estado de la aplicación
+Para la obtención de la información se utilizará el API de thetvdb https://github.com/thetvdb/v4-api  . Para esto se tendrá que crear una cuenta y generar los accesos necesarios para poder utilizarla
+
+Es preponderante que se efectúen consultas y revisiones, con el profesor, previas a las fechas de los hitos del proyecto para efectos de que los equipos cubran sus expectativas (el horario de consulta está indicado en el programa del curso).
+Todos los equipos deberán participar en una demostración del producto al final. 
+
