@@ -1,6 +1,6 @@
 <template>
   <transition name="fade-slide">
-    <div v-if="showResults" class="absolute top-full left-0 right-0 z-50 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl max-h-96 overflow-y-auto mt-2 animate-dropdown">
+    <div v-if="showResults" class="bg-[#23232b] border border-gray-700 rounded-xl shadow-2xl max-h-80 overflow-y-auto mt-2 animate-dropdown">
       <div v-if="loading" class="p-6 text-center text-gray-400">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
         <p class="mt-2">Buscando...</p>
@@ -16,11 +16,11 @@
         <!-- Películas -->
         <div v-if="movies.length > 0">
           <h3 class="text-xs font-bold text-gray-400 mb-2 px-2 tracking-widest uppercase">Películas</h3>
-          <div class="divide-y divide-gray-700">
+          <div class="flex flex-nowrap gap-4 overflow-x-scroll pb-2 custom-scrollbar-horizontal border-t-2 border-black" style="scrollbar-width: auto; min-width: 600px; min-height: 40px;">
             <div 
               v-for="movie in (movies as any[]).filter(m => m.id)"
               :key="`movie-${movie.id}`"
-              class="flex items-center space-x-4 p-3 hover:bg-gray-700/80 rounded-lg transition-colors duration-200 cursor-pointer group"
+              class="flex-shrink-0 w-56 cursor-pointer group bg-gray-800 rounded-lg p-3 hover:bg-gray-700 transition-colors flex flex-row items-center"
               @click="selectShow(movie)"
               :title="''"
             >
@@ -32,7 +32,7 @@
                 @error="handleImageError"
               />
               <div v-else class="w-14 h-20 flex items-center justify-center bg-gray-900 rounded-lg border border-gray-700 text-gray-500 text-xs">No image</div>
-              <div class="flex-1 min-w-0">
+              <div class="flex-1 min-w-0 ml-3">
                 <h4 class="text-white font-semibold truncate">{{ movie.name }}</h4>
                 <div class="flex items-center gap-2 text-xs text-gray-400 mt-1">
                   <span v-if="movie.year">{{ movie.year }}</span>
@@ -42,7 +42,7 @@
                   </span>
                 </div>
               </div>
-              <div class="flex flex-col gap-1 items-end">
+              <div class="flex flex-col gap-1 items-end ml-2">
                 <button 
                   @click.stop="addToFavorites(movie)"
                   :class="[
@@ -80,11 +80,11 @@
         <!-- Series -->
         <div v-if="series.length > 0">
           <h3 class="text-xs font-bold text-gray-400 mb-2 px-2 tracking-widest uppercase">Series</h3>
-          <div class="divide-y divide-gray-700">
+          <div class="flex flex-nowrap gap-4 overflow-x-scroll pb-2 custom-scrollbar-horizontal border-t-2 border-black" style="scrollbar-width: auto; min-width: 600px; min-height: 40px;">
             <div 
               v-for="serie in (series as any[]).filter(s => s.id)"
               :key="`series-${serie.id}`"
-              class="flex items-center space-x-4 p-3 hover:bg-gray-700/80 rounded-lg transition-colors duration-200 cursor-pointer group"
+              class="flex-shrink-0 w-56 cursor-pointer group bg-gray-800 rounded-lg p-3 hover:bg-gray-700 transition-colors flex flex-row items-center"
               @click="selectShow(serie)"
               :title="''"
             >
@@ -96,7 +96,7 @@
                 @error="handleImageError"
               />
               <div v-else class="w-14 h-20 flex items-center justify-center bg-gray-900 rounded-lg border border-gray-700 text-gray-500 text-xs">No image</div>
-              <div class="flex-1 min-w-0">
+              <div class="flex-1 min-w-0 ml-3">
                 <h4 class="text-white font-semibold truncate">{{ serie.name }}</h4>
                 <div class="flex items-center gap-2 text-xs text-gray-400 mt-1">
                   <span v-if="serie.year">{{ serie.year }}</span>
@@ -106,7 +106,7 @@
                   </span>
                 </div>
               </div>
-              <div class="flex flex-col gap-1 items-end">
+              <div class="flex flex-col gap-1 items-end ml-2">
                 <button 
                   @click.stop="addToFavorites(serie)"
                   :class="[
@@ -246,5 +246,18 @@ const handleImageError = (event: Event) => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+.custom-scrollbar-horizontal::-webkit-scrollbar {
+  height: 14px;
+  background: #000;
+  display: block !important;
+}
+.custom-scrollbar-horizontal::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 8px;
+}
+.custom-scrollbar-horizontal {
+  scrollbar-color: #888 #000;
+  scrollbar-width: auto;
 }
 </style> 

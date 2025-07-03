@@ -1,69 +1,9 @@
 <template>
-  <div
-    class="p-4 flex items-center justify-between bg-gray-900 border-b border-gray-800"
-  >
-    <!-- Logo y navegación principal -->
-    <div class="flex items-center space-x-6">
-      <router-link to="/" class="flex items-center space-x-2">
-        <img
-          src="/netflixlogo.png"
-          alt="Logo"
-          class="h-8 w-auto hover:scale-110 transition-transform duration-200"
-        />
-      </router-link>
-      
-      <!-- Navegación a las listas del usuario -->
-      <div class="flex items-center space-x-4">
-        <router-link 
-          to="/favorites" 
-          class="flex items-center space-x-2 text-white hover:text-red-400 transition-colors"
-        >
-          <span class="text-xl">❤️</span>
-          <span class="hidden sm:inline">Favoritos</span>
-          <span v-if="favoritesCount > 0" class="bg-red-600 text-white text-xs px-2 py-1 rounded-full">
-            {{ favoritesCount }}
-          </span>
-        </router-link>
-        
-        <router-link 
-          to="/watchlist" 
-          class="flex items-center space-x-2 text-white hover:text-blue-400 transition-colors"
-        >
-          <span class="text-xl">📺</span>
-          <span class="hidden sm:inline">Watchlist</span>
-          <span v-if="watchlistCount > 0" class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-            {{ watchlistCount }}
-          </span>
-        </router-link>
-        
-        <router-link 
-          to="/watched" 
-          class="flex items-center space-x-2 text-white hover:text-green-400 transition-colors"
-        >
-          <span class="text-xl">✅</span>
-          <span class="hidden sm:inline">Vistas</span>
-          <span v-if="watchedCount > 0" class="bg-green-600 text-white text-xs px-2 py-1 rounded-full">
-            {{ watchedCount }}
-          </span>
-        </router-link>
-      </div>
-    </div>
-
-    <!-- Barra de búsqueda -->
-    <div class="relative flex w-[40%] items-center bg-gray-800 rounded-full">
-      <button class="mr-3 ml-4 p-2">
-        <svg
-          class="h-5 w-5 inline-block hover:text-gray-400 transition-colors duration-200"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          />
+  <div class="p-4 flex items-center justify-center bg-transparent min-w-full max-w-xs">
+    <div class="flex items-center bg-[#353542] rounded-2xl px-4 h-12 w-full max-w-xs shadow-md relative">
+      <button class="mr-2">
+        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       </button>
       <input
@@ -72,33 +12,22 @@
         @focus="showResults = true"
         @blur="handleBlur"
         type="text"
-        placeholder="Buscar shows..."
-        class="w-full p-2 text-white bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-r-full"
+        placeholder="Search"
+        class="flex-1 bg-transparent outline-none text-white placeholder-gray-400 text-base px-2"
         :disabled="!isAuthenticated || loading"
       />
-      
+      <img src="/avatar.png" alt="Avatar" class="w-8 h-8 rounded-full ml-2" />
       <!-- Resultados de búsqueda -->
-      <SearchResults
-        :movies="searchResults.movies"
-        :series="searchResults.series"
-        :loading="searchLoading"
-        :error="searchError"
-        :query="searchQuery"
-        :show-results="showResults"
-      />
-
-      <div v-if="loading" class="absolute left-0 right-0 top-full bg-gray-900 text-blue-400 text-center py-2 rounded-b-lg z-50">
-        Autenticando con TheTVDB...
+      <div v-if="showResults && searchQuery" class="absolute left-0 right-0 top-14 z-50 bg-[#23232b] rounded-xl shadow-2xl max-h-96 min-w-full border border-gray-700 animate-fade-in custom-scrollbar">
+        <SearchResults
+          :movies="searchResults.movies"
+          :series="searchResults.series"
+          :loading="searchLoading"
+          :error="searchError"
+          :query="searchQuery"
+          :show-results="showResults"
+        />
       </div>
-    </div>
-
-    <!-- Avatar del usuario -->
-    <div class="flex items-center space-x-3">
-      <img
-        src="/avatar.png"
-        alt="Avatar"
-        class="w-10 h-10 rounded-full hover:scale-125 transition-transform duration-200 cursor-pointer"
-      />
     </div>
   </div>
 </template>
@@ -171,3 +100,25 @@ onMounted(() => {
   loginAndFetchContent();
 });
 </script>
+
+<style scoped>
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.2s ease;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  height: 8px;
+  background: #23232b;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #444456;
+  border-radius: 4px;
+}
+.custom-scrollbar {
+  scrollbar-color: #444456 #23232b;
+  scrollbar-width: thin;
+}
+</style>

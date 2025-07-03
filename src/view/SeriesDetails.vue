@@ -2,9 +2,12 @@
 import { useRoute } from "vue-router";
 import { ref, onMounted, watch } from "vue";
 import { useTVDB } from "../utils/useTVDB";
+import { useUserStore } from "../stores/userStore";
+import type { Show } from "../stores/userStore";
 
 const route = useRoute();
 const { fetchSeriesDetails, isAuthenticated, loginAndFetchContent } = useTVDB();
+const userStore = useUserStore();
 
 const seriesId = ref<string | string[]>(route.params.id);
 const seriesDetails = ref<any | null>(null);
@@ -62,9 +65,122 @@ onMounted(() => {
 const getYearFromDate = (dateString: string | null) => {
   return dateString ? new Date(dateString).getFullYear() : 'N/A';
 };
+
+// Funciones para los botones inferiores
+const addToWatchlist = () => {
+  if (!seriesDetails.value) return;
+  const show: Show = {
+    id: seriesDetails.value.id,
+    name: seriesDetails.value.name,
+    image: seriesDetails.value.image,
+    type: 'series',
+    year: seriesDetails.value.year
+  };
+  userStore.addToWatchlist(show);
+};
+
+const toggleWatched = () => {
+  if (!seriesDetails.value) return;
+  const show: Show = {
+    id: seriesDetails.value.id,
+    name: seriesDetails.value.name,
+    image: seriesDetails.value.image,
+    type: 'series',
+    year: seriesDetails.value.year
+  };
+  if (userStore.isWatched(show.id, 'series')) {
+    userStore.removeFromWatched(show.id, 'series');
+  } else {
+    userStore.addToWatched(show);
+  }
+};
+
+const toggleFavorite = () => {
+  if (!seriesDetails.value) return;
+  const show: Show = {
+    id: seriesDetails.value.id,
+    name: seriesDetails.value.name,
+    image: seriesDetails.value.image,
+    type: 'series',
+    year: seriesDetails.value.year
+  };
+  if (userStore.isFavorite(show.id, 'series')) {
+    userStore.removeFromFavorites(show.id, 'series');
+  } else {
+    userStore.addToFavorites(show);
+  }
+};
 </script>
 
 <template>
+  <!-- Solo móvil -->
+  <div class="min-h-screen bg-gray-900 text-white max-w-xs mx-auto md:hidden flex flex-col pb-6">
+    <!-- Imagen y header -->
+    <div class="relative w-full h-80 overflow-hidden rounded-b-3xl">
+      <img v-if="seriesDetails && seriesDetails.image" :src="seriesDetails.image" :alt="seriesDetails.name" class="w-full h-full object-cover object-center" />
+      <div v-else class="w-full h-full bg-gray-700 flex items-center justify-center text-gray-400 text-xl">No image</div>
+      <!-- Flecha y menú -->
+      <div class="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
+        <button @click="$router.back()" class="bg-gray-800 bg-opacity-70 rounded-full p-2 hover:bg-opacity-90 transition-opacity">
+          <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button class="bg-gray-800 bg-opacity-70 rounded-full p-2 hover:bg-opacity-90 transition-opacity">
+          <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <circle cx="12" cy="12" r="2" />
+            <circle cx="19" cy="12" r="2" />
+            <circle cx="5" cy="12" r="2" />
+          </svg>
+        </button>
+      </div>
+    </div>
+    <!-- Info principal -->
+    <div class="px-4 py-4 flex flex-col items-center text-center">
+      <div class="flex items-center gap-2 mb-2">
+        <span v-if="seriesDetails && seriesDetails.networks && seriesDetails.networks.length > 0" class="text-red-500 font-bold">{{ seriesDetails.networks[0].name }}</span>
+        <span class="text-xs text-gray-400">TV-series</span>
+      </div>
+      <div class="flex items-center justify-center gap-2 mb-2">
+        <span v-if="seriesDetails && seriesDetails.score" class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded">IMDb {{ seriesDetails.score }}</span>
+        <span v-if="seriesDetails && seriesDetails.year" class="text-gray-300 text-xs">{{ seriesDetails.year }}</span>
+        <span v-if="seriesDetails && seriesDetails.seasons" class="text-gray-300 text-xs">· {{ seriesDetails.seasons }} season{{ seriesDetails.seasons > 1 ? 's' : '' }}</span>
+        <span v-if="seriesDetails && seriesDetails.status && seriesDetails.status.name" class="text-gray-300 text-xs">· {{ seriesDetails.status.name }}</span>
+        <span v-if="seriesDetails && seriesDetails.averageRuntime" class="text-gray-300 text-xs">· {{ seriesDetails.averageRuntime }}m</span>
+      </div>
+      <h2 class="text-2xl font-bold mb-2 leading-tight">{{ seriesDetails?.name }}</h2>
+      <!-- Géneros -->
+      <div v-if="seriesDetails && seriesDetails.genres && seriesDetails.genres.length > 0" class="mb-3 flex flex-wrap gap-2 justify-center">
+        <span v-for="genre in seriesDetails.genres" :key="genre.id" class="bg-gray-700 text-gray-200 text-xs px-3 py-1 rounded-full">{{ genre.name }}</span>
+      </div>
+      <!-- Descripción -->
+      <p v-if="seriesDetails && seriesDetails.overview" class="text-gray-300 text-sm mb-3">{{ seriesDetails.overview }}</p>
+      <!-- Creadores -->
+      <div v-if="seriesDetails && seriesDetails.creators && seriesDetails.creators.length > 0" class="text-xs text-gray-400 mb-4">
+        <span class="font-semibold text-gray-300">Creators:</span>
+        <span class="font-semibold">{{ seriesDetails.creators.map((c: any) => c.name).join(', ') }}</span>
+      </div>
+      <!-- Botón principal -->
+      <button class="w-full bg-blue-200 text-blue-900 font-bold py-3 rounded-2xl text-lg mb-4 shadow hover:bg-blue-300 transition-colors">Start watching</button>
+      <!-- Botones inferiores -->
+      <div class="flex justify-between w-full mt-2">
+        <button class="flex flex-col items-center flex-1" @click="addToWatchlist">
+          <span class="text-2xl">📋</span>
+          <span class="text-xs mt-1">Add to watchlist</span>
+        </button>
+        <button class="flex flex-col items-center flex-1" @click="toggleWatched">
+          <span class="text-2xl">✅</span>
+          <span class="text-xs mt-1">Mark as watched</span>
+        </button>
+        <button class="flex flex-col items-center flex-1" @click="toggleFavorite">
+          <span class="text-2xl">⭐</span>
+          <span class="text-xs mt-1">Add to favorites</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- Vista escritorio original -->
+  <div class="hidden md:block">
   <div class="min-h-screen bg-gray-900 text-white font-sans overflow-hidden">
     <div v-if="loadingDetails" class="flex items-center justify-center h-screen text-purple-400 text-2xl">
       Cargando detalles de la serie...
@@ -178,6 +294,7 @@ const getYearFromDate = (dateString: string | null) => {
                 class="w-full h-32 sm:h-40 md:h-48 bg-gray-700 flex items-center justify-center text-gray-500 text-xs"
               >
                 No thumbnail
+                </div>
               </div>
             </div>
           </div>

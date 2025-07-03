@@ -39,6 +39,24 @@ const routes = [
     name: "Watched",
     component: Watched,
   },
+  {
+    path: '/myshows/watchlist/:type?',
+    name: 'MyShowsWatchlist',
+    component: () => import('../view/MyShowsList.vue'),
+    props: route => ({ listType: 'watchlist', type: route.params.type })
+  },
+  {
+    path: '/myshows/watched/:type?',
+    name: 'MyShowsWatched',
+    component: () => import('../view/MyShowsList.vue'),
+    props: route => ({ listType: 'watched', type: route.params.type })
+  },
+  {
+    path: '/myshows/favorites/:type?',
+    name: 'MyShowsFavorites',
+    component: () => import('../view/MyShowsList.vue'),
+    props: route => ({ listType: 'favorites', type: route.params.type })
+  },
 ];
 
 const router = createRouter({
