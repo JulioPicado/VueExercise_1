@@ -246,6 +246,65 @@ export function useTVDB() {
     }
   };
 
+  const fetchSeriesEpisodes = async (seriesId: number | string) => {
+    if (!token.value) {
+      console.warn("fetchSeriesEpisodes llamado sin token. Esperando token...");
+      return null;
+    }
+
+    try {
+      const res = await fetch(`${apiBaseUrl}/series/${seriesId}/episodes/default?page=0`, {
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+          accept: "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(
+          `Episodios de serie: ${err.message} (Status: ${res.status})`
+        );
+      }
+
+      const json = await res.json();
+      const episodesData = json.data;
+
+      // Procesar episodios y agrupar por temporada
+      const episodesBySeasons: { [key: number]: any[] } = {};
+      
+      if (episodesData.episodes) {
+        episodesData.episodes.forEach((episode: any) => {
+          // Solo incluir episodios con seasonNumber > 0 (excluir especiales)
+          if (episode.seasonNumber > 0) {
+            if (!episodesBySeasons[episode.seasonNumber]) {
+              episodesBySeasons[episode.seasonNumber] = [];
+            }
+            
+            episodesBySeasons[episode.seasonNumber].push({
+              ...episode,
+              image: episode.image ? getFullImageUrl(episode.image) : null,
+            });
+          }
+        });
+      }
+
+      // Ordenar episodios dentro de cada temporada por número de episodio
+      Object.keys(episodesBySeasons).forEach(seasonNum => {
+        episodesBySeasons[parseInt(seasonNum)].sort((a, b) => a.number - b.number);
+      });
+
+      return {
+        series: episodesData.series,
+        episodesBySeasons,
+        totalSeasons: Object.keys(episodesBySeasons).length
+      };
+    } catch (err) {
+      console.error("Error al obtener episodios de la serie:", err);
+      throw err;
+    }
+  };
+
   const searchShows = async (query: string) => {
     if (!token.value) {
       console.warn("searchShows llamado sin token. Esperando token...");
@@ -315,6 +374,7 @@ export function useTVDB() {
     loginAndFetchContent,
     fetchMovieDetails,
     fetchSeriesDetails,
+    fetchSeriesEpisodes,
     searchShows,
   };
 }
