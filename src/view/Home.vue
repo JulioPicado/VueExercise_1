@@ -21,7 +21,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- Vista móvil -->
+  <!-- Vista móvil patacion -->
   <div class="min-h-screen bg-[#353542] text-white p-4 max-w-xs mx-auto md:hidden">
     <!-- Elimino el header de búsqueda local, solo queda el global -->
     <!-- Sección de películas recomendadas -->
