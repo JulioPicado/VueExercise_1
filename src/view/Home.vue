@@ -21,8 +21,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- Vista móvil patacion -->
-  <div class="min-h-screen bg-[#353542] text-white p-4 max-w-xs mx-auto md:hidden">
+  <!-- Vista móvil y responsive -->
+  <div class="min-h-screen bg-[#353542] text-white p-4 w-full md:max-w-3xl md:mx-auto md:hidden">
     <!-- Elimino el header de búsqueda local, solo queda el global -->
     <!-- Sección de películas recomendadas -->
     <div class="mb-6">
@@ -30,9 +30,9 @@ onMounted(() => {
         <span class="text-base font-semibold">Recommended movies</span>
         <span class="text-gray-400 text-xl">→</span>
       </div>
-      <div class="flex space-x-4 overflow-x-auto pb-2 custom-scrollbar-horizontal">
-        <div v-for="movie in (movieList as any[])" :key="movie.id" class="flex-shrink-0 w-28 cursor-pointer" @click="goToDetails(movie, 'movie')">
-          <div class="relative w-28 h-40 rounded-lg overflow-hidden bg-gray-700">
+      <div class="flex space-x-4 overflow-x-auto pb-6 custom-scrollbar-horizontal">
+        <div v-for="movie in (movieList as any[])" :key="movie.id" class="flex-shrink-0 w-28 h-40 cursor-pointer" @click="goToDetails(movie, 'movie')">
+          <div class="relative w-full h-full rounded-lg overflow-hidden bg-gray-700">
             <img v-if="movie.image" :src="movie.image" :alt="movie.name" class="w-full h-full object-cover" />
             <div v-else class="w-full h-full bg-gray-600 flex items-center justify-center text-gray-400">No image</div>
             <span v-if="movie.score" class="absolute top-1 right-1 bg-gray-900 bg-opacity-80 text-white text-xs px-2 py-0.5 rounded-full">{{ movie.score }}</span>
@@ -47,9 +47,9 @@ onMounted(() => {
         <span class="text-base font-semibold">Popular TV series</span>
         <span class="text-gray-400 text-xl">→</span>
       </div>
-      <div class="flex space-x-4 overflow-x-auto pb-2 custom-scrollbar-horizontal">
-        <div v-for="serie in (seriesList as any[])" :key="serie.id" class="flex-shrink-0 w-28 cursor-pointer" @click="goToDetails(serie, 'series')">
-          <div class="relative w-28 h-40 rounded-lg overflow-hidden bg-gray-700">
+      <div class="flex space-x-4 overflow-x-auto pb-6 custom-scrollbar-horizontal">
+        <div v-for="serie in (seriesList as any[])" :key="serie.id" class="flex-shrink-0 w-28 h-40 cursor-pointer" @click="goToDetails(serie, 'series')">
+          <div class="relative w-full h-full rounded-lg overflow-hidden bg-gray-700">
             <img v-if="serie.image" :src="serie.image" :alt="serie.name" class="w-full h-full object-cover" />
             <div v-else class="w-full h-full bg-gray-600 flex items-center justify-center text-gray-400">No image</div>
             <span v-if="serie.score" class="absolute top-1 right-1 bg-gray-900 bg-opacity-80 text-white text-xs px-2 py-0.5 rounded-full">{{ serie.score }}</span>
