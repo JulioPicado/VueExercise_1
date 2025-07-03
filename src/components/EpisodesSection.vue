@@ -93,6 +93,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch, onMounted } from 'vue';
+import { useUserStore } from '../stores/userStore';
+import { 
+  addWatchedEpisode, 
+  removeWatchedEpisode, 
+  getSeriesWatchedEpisodes 
+} from '../utils/database';
 
 interface Episode {
   id: number;
@@ -110,15 +116,48 @@ interface Props {
   episodesBySeasons: { [key: number]: Episode[] };
   loading: boolean;
   error: string | null;
+  seriesId: number;
 }
 
 const props = defineProps<Props>();
+
+// Store del usuario
+const userStore = useUserStore();
 
 // Estado para controlar temporadas expandidas
 const expandedSeasons = ref<number[]>([]);
 
 // Estado para episodios marcados como vistos
 const watchedEpisodes = reactive<{ [key: number]: boolean }>({});
+
+// Estado de carga para episodios vistos
+const loadingWatchedEpisodes = ref(false);
+
+// Función para cargar episodios vistos desde la base de datos
+const loadWatchedEpisodes = async () => {
+  if (!userStore.user?.id || !props.seriesId) return;
+  
+  try {
+    loadingWatchedEpisodes.value = true;
+    const watchedList = await getSeriesWatchedEpisodes(userStore.user.id, props.seriesId);
+    
+    // Limpiar estado actual
+    Object.keys(watchedEpisodes).forEach(key => {
+      watchedEpisodes[parseInt(key)] = false;
+    });
+    
+    // Marcar episodios como vistos
+    watchedList.forEach(item => {
+      watchedEpisodes[item.episode_id] = true;
+    });
+    
+    console.log(`📺 Cargados ${watchedList.length} episodios vistos para la serie ${props.seriesId}`);
+  } catch (error) {
+    console.error('❌ Error cargando episodios vistos:', error);
+  } finally {
+    loadingWatchedEpisodes.value = false;
+  }
+};
 
 // Función para expandir/contraer temporadas
 const toggleSeason = (seasonNum: number) => {
@@ -131,10 +170,35 @@ const toggleSeason = (seasonNum: number) => {
 };
 
 // Función para manejar el toggle de episodios vistos
-const handleEpisodeToggle = (episode: Episode) => {
+const handleEpisodeToggle = async (episode: Episode) => {
+  if (!userStore.user?.id) {
+    console.warn('⚠️ Usuario no autenticado');
+    return;
+  }
+
   const isWatched = watchedEpisodes[episode.id];
-  console.log(`Episodio ${episode.name} marcado como ${isWatched ? 'visto' : 'no visto'}`);
-  // Aquí se implementaría la lógica para guardar en la base de datos
+  
+  try {
+    if (isWatched) {
+      // Marcar como visto
+      await addWatchedEpisode(
+        userStore.user.id,
+        episode.seriesId,
+        episode.id,
+        episode.seasonNumber,
+        episode.number
+      );
+      console.log(`✅ Episodio "${episode.name}" marcado como visto`);
+    } else {
+      // Quitar de vistos
+      await removeWatchedEpisode(userStore.user.id, episode.id);
+      console.log(`❌ Episodio "${episode.name}" quitado de vistos`);
+    }
+  } catch (error) {
+    console.error('❌ Error al actualizar estado del episodio:', error);
+    // Revertir el estado si hay error
+    watchedEpisodes[episode.id] = !isWatched;
+  }
 };
 
 // Función para formatear fechas
@@ -160,11 +224,30 @@ watch(() => props.episodesBySeasons, (newEpisodes) => {
   }
 }, { immediate: true });
 
+// Cargar episodios vistos cuando cambie la serie
+watch(() => props.seriesId, () => {
+  if (props.seriesId) {
+    loadWatchedEpisodes();
+  }
+}, { immediate: true });
+
+// Recargar cuando el usuario se autentica
+watch(() => userStore.user?.id, () => {
+  if (userStore.user?.id && props.seriesId) {
+    loadWatchedEpisodes();
+  }
+});
+
 onMounted(() => {
   // Inicializar episodios expandidos si hay datos
   if (props.episodesBySeasons && Object.keys(props.episodesBySeasons).length > 0) {
     const firstSeason = Math.min(...Object.keys(props.episodesBySeasons).map(Number));
     expandedSeasons.value.push(firstSeason);
+  }
+  
+  // Cargar episodios vistos
+  if (userStore.user?.id && props.seriesId) {
+    loadWatchedEpisodes();
   }
 });
 </script>

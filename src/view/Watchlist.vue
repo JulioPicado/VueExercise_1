@@ -61,11 +61,29 @@
     <div class="mb-4">
       <h3 class="text-sm font-semibold mb-2">Watching</h3>
       <div class="flex flex-wrap gap-4 justify-center">
-        <div v-for="show in watchingShows" :key="show.id" class="flex flex-col items-center bg-gray-800 rounded-2xl shadow-md overflow-hidden w-28 h-48">
-          <img :src="show.image" :alt="show.name" class="w-full h-32 object-cover rounded-t-2xl" />
+        <div v-for="show in watchingShows" :key="show.id" class="flex flex-col items-center bg-gray-800 rounded-2xl shadow-md overflow-hidden w-28 h-52" @click="navigateToDetails(show)">
+          <div class="relative w-full h-32">
+            <img :src="show.image" :alt="show.name" class="w-full h-full object-cover rounded-t-2xl" />
+            <!-- Badge de progreso -->
+            <div class="absolute top-1 right-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">
+              {{ seriesProgress[show.id]?.percentage || 0 }}%
+            </div>
+          </div>
           <div class="px-2 py-2 w-full flex flex-col items-center">
             <span class="text-xs font-bold text-white text-center truncate w-full">{{ show.name }}</span>
             <span class="text-[10px] text-gray-400">{{ show.year }}</span>
+            <!-- Barra de progreso -->
+            <div class="w-full mt-1">
+              <div class="w-full bg-gray-700 rounded-full h-1">
+                <div 
+                  class="bg-blue-500 h-1 rounded-full transition-all duration-300" 
+                  :style="{ width: `${seriesProgress[show.id]?.percentage || 0}%` }"
+                ></div>
+              </div>
+              <span class="text-[9px] text-gray-500 mt-0.5">
+                {{ seriesProgress[show.id]?.watched || 0 }}/{{ seriesProgress[show.id]?.total || 0 }} eps
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -77,6 +95,21 @@
           <img :src="show.image" :alt="show.name" class="w-full h-full object-cover" />
           <!-- Badge de favorito o visto -->
           <span v-if="show.isFavorite" class="absolute top-1 right-1 bg-yellow-400 text-white text-xs px-1.5 py-0.5 rounded-full">★</span>
+          <!-- Badge de progreso para series -->
+          <div v-if="show.type === 'series' && seriesProgress[show.id] && seriesProgress[show.id].watched > 0" class="absolute bottom-1 left-1 right-1">
+            <div class="bg-black/70 backdrop-blur-sm rounded-full px-2 py-1">
+              <div class="flex items-center justify-between mb-0.5">
+                <span class="text-[9px] text-white font-medium">{{ seriesProgress[show.id].percentage }}%</span>
+                <span class="text-[8px] text-gray-300">{{ seriesProgress[show.id].watched }}/{{ seriesProgress[show.id].total }}</span>
+              </div>
+              <div class="w-full bg-gray-600 rounded-full h-0.5">
+                <div 
+                  class="bg-blue-500 h-0.5 rounded-full transition-all duration-300" 
+                  :style="{ width: `${seriesProgress[show.id].percentage}%` }"
+                ></div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="px-1 py-1">
           <p class="text-xs font-medium text-white truncate">{{ show.name }}</p>
@@ -153,18 +186,72 @@
         Favorites
       </button>
     </div>
+    
+    <!-- Sección Watching en escritorio -->
+    <div v-if="watchingShows.length > 0 && activeTab === 'tv-series'" class="mb-8">
+      <h3 class="text-xl font-semibold mb-4">Currently Watching</h3>
+      <div class="grid grid-cols-6 gap-4">
+        <div v-for="show in watchingShows" :key="show.id" class="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow cursor-pointer flex flex-col" @click="navigateToDetails(show)">
+          <div class="relative w-full h-32">
+            <img :src="show.image" :alt="show.name" class="w-full h-full object-cover" />
+            <!-- Badge de progreso -->
+            <div class="absolute top-1 right-1 bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+              {{ seriesProgress[show.id]?.percentage || 0 }}%
+            </div>
+          </div>
+          <div class="px-2 py-2 flex-1 flex flex-col justify-between">
+            <p class="text-sm font-medium text-white truncate">{{ show.name }}</p>
+            <div class="mt-1">
+              <div class="w-full bg-gray-700 rounded-full h-1">
+                <div 
+                  class="bg-blue-500 h-1 rounded-full transition-all duration-300" 
+                  :style="{ width: `${seriesProgress[show.id]?.percentage || 0}%` }"
+                ></div>
+              </div>
+              <span class="text-xs text-gray-400 mt-1">
+                {{ seriesProgress[show.id]?.watched || 0 }}/{{ seriesProgress[show.id]?.total || 0 }} eps
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div v-if="filteredShows.length === 0" class="flex-1 flex flex-col items-center justify-center text-gray-400 text-center p-8">
-      <span>No items in this list.</span>
+      <span v-if="activeList === 'watchlist' && watchingShows.length === 0">No items in your watchlist.</span>
+      <span v-else-if="activeList === 'watched'">No watched items.</span>
+      <span v-else-if="activeList === 'favorites'">No favorite items.</span>
+      <span v-else>No items in this list.</span>
     </div>
     <div v-else class="grid grid-cols-4 gap-6 items-start">
       <div v-for="show in filteredShows" :key="`${show.type}-${show.id}`" class="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow cursor-pointer flex flex-col flex-none max-w-full" @click="navigateToDetails(show)">
         <div class="relative w-full h-56 bg-gray-700">
           <img :src="show.image" :alt="show.name" class="w-full h-full object-cover" />
           <span v-if="show.isFavorite" class="absolute top-1 right-1 bg-yellow-400 text-white text-xs px-1.5 py-0.5 rounded-full">★</span>
+          <!-- Badge de progreso para series -->
+          <div v-if="show.type === 'series' && seriesProgress[show.id] && seriesProgress[show.id].watched > 0" class="absolute bottom-2 left-2 right-2">
+            <div class="bg-black/80 backdrop-blur-sm rounded-lg px-3 py-2">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-sm text-white font-semibold">{{ seriesProgress[show.id].percentage }}%</span>
+                <span class="text-xs text-gray-300">{{ seriesProgress[show.id].watched }}/{{ seriesProgress[show.id].total }} eps</span>
+              </div>
+              <div class="w-full bg-gray-600 rounded-full h-1">
+                <div 
+                  class="bg-blue-500 h-1 rounded-full transition-all duration-300" 
+                  :style="{ width: `${seriesProgress[show.id].percentage}%` }"
+                ></div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="px-3 py-2 flex-1 flex flex-col justify-between">
           <p class="text-base font-semibold text-white truncate">{{ show.name }}</p>
-          <p class="text-xs text-gray-400">{{ show.year }}</p>
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-gray-400">{{ show.year }}</p>
+            <!-- Estado "Watching" para series con progreso -->
+            <span v-if="show.type === 'series' && seriesProgress[show.id] && seriesProgress[show.id].watched > 0 && seriesProgress[show.id].percentage < 100" class="text-xs bg-blue-500 text-white px-2 py-1 rounded-full">
+              Watching
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -172,16 +259,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '../stores/userStore';
 import type { Show } from '../stores/userStore';
+import { getSeriesWatchedEpisodes } from '../utils/database';
+import { useTVDB } from '../utils/useTVDB';
 
 const router = useRouter();
 const userStore = useUserStore();
+const { fetchSeriesEpisodes } = useTVDB();
 const searchQuery = ref('');
 const activeTab = ref<'tv-series' | 'movies'>('tv-series');
 const activeList = ref<'watchlist' | 'watched' | 'favorites'>('watchlist');
+
+// Estado para almacenar el progreso de las series
+const seriesProgress = reactive<{ [key: string]: { watched: number; total: number; percentage: number } }>({});
 
 const allLists = {
   watchlist: computed(() => userStore.watchlist),
@@ -202,7 +295,93 @@ const filteredShows = computed(() => {
   });
 });
 
-const watchingShows = computed(() => userStore.watchlist.filter(show => !userStore.isWatched(show.id, show.type)));
+// Función para obtener el progreso de una serie
+const getSeriesProgress = async (seriesId: string) => {
+  if (!userStore.user?.id) return { watched: 0, total: 0, percentage: 0 };
+  
+  try {
+    console.log(`🔍 Calculando progreso para serie ID: ${seriesId}`);
+    
+    // Obtener episodios vistos
+    const watchedEpisodes = await getSeriesWatchedEpisodes(userStore.user.id, parseInt(seriesId));
+    console.log(`📺 Episodios vistos en BD: ${watchedEpisodes.length}`, watchedEpisodes);
+    
+    // Obtener total de episodios
+    const episodesData = await fetchSeriesEpisodes(seriesId);
+    console.log(`📊 Datos de episodios desde API:`, episodesData);
+    
+    let totalEpisodes = 0;
+    if (episodesData && episodesData.episodesBySeasons) {
+      // Contar episodios por temporada
+      const seasons = Object.keys(episodesData.episodesBySeasons);
+      console.log(`🎭 Temporadas encontradas: ${seasons.length}`, seasons);
+      
+      for (const seasonNum of seasons) {
+        const episodesInSeason = episodesData.episodesBySeasons[parseInt(seasonNum)];
+        if (episodesInSeason && Array.isArray(episodesInSeason)) {
+          totalEpisodes += episodesInSeason.length;
+          console.log(`🎬 Temporada ${seasonNum}: ${episodesInSeason.length} episodios`);
+        }
+      }
+    }
+    
+    console.log(`📊 Total de episodios calculado: ${totalEpisodes}`);
+    
+    const watchedCount = watchedEpisodes.length;
+    const percentage = totalEpisodes > 0 ? Math.round((watchedCount / totalEpisodes) * 100) : 0;
+    
+    const result = {
+      watched: watchedCount,
+      total: totalEpisodes,
+      percentage: percentage
+    };
+    
+    console.log(`✅ Progreso calculado para serie ${seriesId}:`, result);
+    
+    return result;
+  } catch (error) {
+    console.error('❌ Error obteniendo progreso de serie:', error);
+    return { watched: 0, total: 0, percentage: 0 };
+  }
+};
+
+// Función para cargar el progreso de todas las series
+const loadSeriesProgress = async () => {
+  if (!userStore.user?.id) {
+    console.log('⚠️ No hay usuario autenticado, no se puede cargar progreso');
+    return;
+  }
+  
+  const series = userStore.watchlist.filter(show => show.type === 'series');
+  console.log(`🎭 Cargando progreso para ${series.length} series:`, series.map(s => ({ id: s.id, name: s.name })));
+  
+  for (const serie of series) {
+    try {
+      console.log(`🔄 Procesando serie: ${serie.name} (ID: ${serie.id})`);
+      const progress = await getSeriesProgress(serie.id.toString());
+      seriesProgress[serie.id] = progress;
+      console.log(`✅ Progreso guardado para ${serie.name}:`, progress);
+    } catch (error) {
+      console.error(`❌ Error cargando progreso para ${serie.name}:`, error);
+      seriesProgress[serie.id] = { watched: 0, total: 0, percentage: 0 };
+    }
+  }
+  
+  console.log('🎉 Progreso de todas las series cargado:', seriesProgress);
+};
+
+// Computed para shows que están siendo "watched" (tienen progreso pero no están completadas)
+const watchingShows = computed(() => {
+  return userStore.watchlist.filter(show => {
+    if (show.type !== 'series') return false;
+    
+    const progress = seriesProgress[show.id];
+    if (!progress) return false;
+    
+    // Mostrar en "watching" si tiene episodios vistos pero no está 100% completada
+    return progress.watched > 0 && progress.percentage < 100;
+  });
+});
 
 const setActiveTab = (tab: 'tv-series' | 'movies') => {
   activeTab.value = tab;
@@ -222,13 +401,16 @@ const navigateToDetails = (show: Show) => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   // Cargar datos del usuario al montar el componente
   console.log('📺 Watchlist montado, datos del usuario:', {
     watchlist: userStore.watchlist.length,
     favorites: userStore.favorites.length,
     watched: userStore.watched.length
   });
+  
+  // Cargar progreso de series
+  await loadSeriesProgress();
 });
 </script>
 

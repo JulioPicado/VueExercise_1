@@ -138,20 +138,31 @@ const toggleFavorite = () => {
 </script>
 
 <template>
-  <!-- Solo móvil -->
-  <div class="min-h-screen bg-gray-900 text-white max-w-xs mx-auto md:hidden flex flex-col pb-6">
-    <!-- Imagen y header -->
-    <div class="relative w-full h-80 overflow-hidden rounded-b-3xl">
-      <img v-if="seriesDetails && seriesDetails.image" :src="seriesDetails.image" :alt="seriesDetails.name" class="w-full h-full object-cover object-center" />
-      <div v-else class="w-full h-full bg-gray-700 flex items-center justify-center text-gray-400 text-xl">No image</div>
-      <!-- Flecha y menú -->
-      <div class="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
-        <button @click="$router.back()" class="bg-gray-800 bg-opacity-70 rounded-full p-2 hover:bg-opacity-90 transition-opacity">
+  <!-- Vista móvil mejorada -->
+  <div class="min-h-screen bg-gray-900 text-white md:hidden flex flex-col">
+    <!-- Hero section con imagen de fondo -->
+    <div class="relative w-full h-screen overflow-hidden">
+      <img 
+        v-if="seriesDetails && seriesDetails.image" 
+        :src="seriesDetails.image" 
+        :alt="seriesDetails.name" 
+        class="w-full h-full object-cover object-center" 
+      />
+      <div v-else class="w-full h-full bg-gray-700 flex items-center justify-center text-gray-400 text-xl">
+        No image
+      </div>
+      
+      <!-- Gradiente overlay -->
+      <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/70 to-transparent"></div>
+      
+      <!-- Header con botones de navegación -->
+      <div class="absolute top-6 left-4 right-4 flex justify-between items-center z-20">
+        <button @click="$router.back()" class="bg-black/40 backdrop-blur-sm rounded-full p-3 hover:bg-black/60 transition-all">
           <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <button class="bg-gray-800 bg-opacity-70 rounded-full p-2 hover:bg-opacity-90 transition-opacity">
+        <button class="bg-black/40 backdrop-blur-sm rounded-full p-3 hover:bg-black/60 transition-all">
           <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <circle cx="12" cy="12" r="2" />
             <circle cx="19" cy="12" r="2" />
@@ -159,181 +170,265 @@ const toggleFavorite = () => {
           </svg>
         </button>
       </div>
-    </div>
-    <!-- Info principal -->
-    <div class="px-4 py-4 flex flex-col items-center text-center">
-      <div class="flex items-center gap-2 mb-2">
-        <span v-if="seriesDetails && seriesDetails.networks && seriesDetails.networks.length > 0" class="text-red-500 font-bold">{{ seriesDetails.networks[0].name }}</span>
-        <span class="text-xs text-gray-400">TV-series</span>
-      </div>
       
-      <h2 class="text-2xl font-bold mb-2 leading-tight">{{ seriesDetails?.name }}</h2>
-      <!-- Géneros -->
-      <div v-if="seriesDetails && seriesDetails.genres && seriesDetails.genres.length > 0" class="mb-3 flex flex-wrap gap-2 justify-center">
-        <span v-for="genre in seriesDetails.genres" :key="genre.id" class="bg-gray-700 text-gray-200 text-xs px-3 py-1 rounded-full">{{ genre.name }}</span>
-      </div>
-      <!-- Descripción -->
-      <p v-if="seriesDetails && seriesDetails.overview" class="text-gray-300 text-sm mb-3">{{ seriesDetails.overview }}</p>
-      <!-- Creadores -->
-      <div v-if="seriesDetails && seriesDetails.creators && seriesDetails.creators.length > 0" class="text-xs text-gray-400 mb-4">
-        <span class="font-semibold text-gray-300">Creators:</span>
-        <span class="font-semibold">{{ seriesDetails.creators.map((c: any) => c.name).join(', ') }}</span>
-      </div>
-      <!-- Botón principal -->
-      <button class="w-full bg-blue-200 text-blue-900 font-bold py-3 rounded-2xl text-lg mb-4 shadow hover:bg-blue-300 transition-colors">Start watching</button>
-      <!-- Botones inferiores -->
-      <div class="flex justify-between w-full mt-2">
-        <button class="flex flex-col items-center flex-1" @click="addToWatchlist">
-          <span class="text-2xl">📋</span>
-          <span class="text-xs mt-1">Add to watchlist</span>
+      <!-- Información de la serie -->
+      <div class="absolute bottom-0 left-0 right-0 p-6 z-10">
+        <!-- Badge de red -->
+        <div class="flex items-center gap-2 mb-3">
+          <span class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">TV-series</span>
+        </div>
+        
+        <!-- Título -->
+        <h1 class="text-4xl font-bold mb-3 leading-tight">{{ seriesDetails?.name }}</h1>
+        
+        <!-- Metadata -->
+        <div class="flex items-center gap-2 mb-4 flex-wrap">
+          <span v-if="seriesDetails && seriesDetails.score" class="bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded flex items-center gap-1">
+            <span>IMDb</span>
+            <span>{{ (seriesDetails.score / 1000).toFixed(1) }}</span>
+          </span>
+          <span v-if="seriesDetails && seriesDetails.year" class="text-white text-sm">{{ seriesDetails.year }}</span>
+          <span v-if="episodesData && episodesData.totalSeasons" class="text-white text-sm">• {{ episodesData.totalSeasons }} season{{ episodesData.totalSeasons > 1 ? 's' : '' }}</span>
+          <span v-if="seriesDetails && seriesDetails.status && seriesDetails.status.name" class="text-white text-sm">• {{ seriesDetails.status.name }}</span>
+          <span v-if="seriesDetails && seriesDetails.averageRuntime" class="text-white text-sm">• {{ seriesDetails.averageRuntime }}m</span>
+        </div>
+        
+        <!-- Géneros -->
+        <div v-if="seriesDetails && seriesDetails.genres && seriesDetails.genres.length > 0" class="flex flex-wrap gap-2 mb-4">
+          <span v-for="genre in seriesDetails.genres.slice(0, 3)" :key="genre.id" class="text-white text-sm">
+            {{ genre.name }}
+          </span>
+        </div>
+        
+        <!-- Descripción -->
+        <p v-if="seriesDetails && seriesDetails.overview" class="text-gray-200 text-sm mb-6 line-clamp-3 leading-relaxed">
+          {{ seriesDetails.overview }}
+        </p>
+        
+        <!-- Creadores -->
+        <div v-if="seriesDetails && seriesDetails.creators && seriesDetails.creators.length > 0" class="text-sm text-gray-300 mb-6">
+          <span class="font-semibold">Creators: </span>
+          <span>{{ seriesDetails.creators.map((c: any) => c.name).join(', ') }}</span>
+        </div>
+        
+        <!-- Botón principal -->
+        <button class="w-full bg-white text-black font-bold py-4 rounded-lg text-lg mb-4 flex items-center justify-center gap-2 shadow-lg hover:bg-gray-100 transition-colors">
+          <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+          Start watching
         </button>
-        <button class="flex flex-col items-center flex-1" @click="toggleWatched">
-          <span class="text-2xl">✅</span>
-          <span class="text-xs mt-1">Mark as watched</span>
-        </button>
-        <button class="flex flex-col items-center flex-1" @click="toggleFavorite">
-          <span class="text-2xl">⭐</span>
-          <span class="text-xs mt-1">Add to favorites</span>
-        </button>
+        
+        <!-- Botones de acción -->
+        <div class="flex justify-center gap-8 mb-4">
+          <button class="flex flex-col items-center gap-1" @click="addToWatchlist">
+            <div class="bg-gray-800/80 backdrop-blur-sm rounded-full p-3">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </div>
+            <span class="text-xs text-gray-300">Add to watchlist</span>
+          </button>
+          
+          <button class="flex flex-col items-center gap-1" @click="toggleWatched">
+            <div class="bg-gray-800/80 backdrop-blur-sm rounded-full p-3">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </div>
+            <span class="text-xs text-gray-300">Mark as watched</span>
+          </button>
+          
+          <button class="flex flex-col items-center gap-1" @click="toggleFavorite">
+            <div class="bg-gray-800/80 backdrop-blur-sm rounded-full p-3">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              </svg>
+            </div>
+            <span class="text-xs text-gray-300">Add to favorites</span>
+          </button>
+        </div>
       </div>
     </div>
     
-    <!-- Sección de episodios para móvil -->
-    <div class="px-4 pb-6">
-      <EpisodesSection 
-        :episodesBySeasons="episodesData?.episodesBySeasons || {}"
-        :loading="loadingEpisodes"
-        :error="errorEpisodes"
-      />
+    <!-- Contenido desplazable -->
+    <div class="bg-gray-900 -mt-6 relative z-20 rounded-t-3xl min-h-screen">
+      <!-- Sección de episodios -->
+      <div class="pt-8 px-4">
+        <EpisodesSection 
+          :episodesBySeasons="episodesData?.episodesBySeasons || {}"
+          :loading="loadingEpisodes"
+          :error="errorEpisodes"
+          :seriesId="parseInt(seriesId as string)"
+        />
+      </div>
     </div>
   </div>
-  <!-- Vista escritorio original -->
-  <div class="hidden md:block">
-  <div class="min-h-screen bg-gray-900 text-white font-sans overflow-hidden">
-    <div v-if="loadingDetails" class="flex items-center justify-center h-screen text-purple-400 text-2xl">
-      Cargando detalles de la serie...
+  <!-- Vista escritorio mejorada -->
+  <div class="hidden md:block min-h-screen bg-gray-900 text-white">
+    <div v-if="loadingDetails" class="flex items-center justify-center h-screen">
+      <div class="text-center">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <p class="mt-4 text-xl text-gray-400">Cargando detalles de la serie...</p>
+      </div>
     </div>
 
-    <div v-else-if="errorDetails" class="flex items-center justify-center h-screen bg-red-900 p-4 rounded-lg text-red-200 text-center mx-auto max-w-md">
-      <p class="font-bold">¡Error al cargar los detalles!</p>
-      <p>Detalles: {{ errorDetails }}</p>
+    <div v-else-if="errorDetails" class="flex items-center justify-center h-screen">
+      <div class="bg-red-900/80 backdrop-blur-sm p-8 rounded-xl text-red-200 text-center max-w-md">
+        <h2 class="text-2xl font-bold mb-4">¡Error al cargar los detalles!</h2>
+        <p class="mb-4">{{ errorDetails }}</p>
+        <router-link to="/" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+          Volver al inicio
+        </router-link>
+      </div>
     </div>
 
-    <div v-else-if="seriesDetails">
-      <!-- Contenedor principal del contenido -->
-      <div class="relative w-full h-auto max-h-[500px] md:h-[600px] overflow-hidden">
+    <div v-else-if="seriesDetails" class="relative">
+      <!-- Hero section a pantalla completa -->
+      <div class="relative w-full h-screen overflow-hidden">
         <img
           v-if="seriesDetails.image"
           :src="seriesDetails.image"
           :alt="seriesDetails.name || 'Poster'"
           class="w-full h-full object-cover object-center"
         />
-        <div v-else class="w-full h-full bg-gray-700 flex items-center justify-center text-gray-400 text-xl">
+        <div v-else class="w-full h-full bg-gray-700 flex items-center justify-center text-gray-400 text-2xl">
           No hay imagen disponible
         </div>
 
-        <!-- Capa de sombra para el texto en la imagen -->
-        <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent"></div>
+        <!-- Gradiente overlay -->
+        <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/70 to-gray-900/20"></div>
 
-        <div class="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
-          <router-link to="/" class="bg-gray-800 bg-opacity-70 rounded-full p-2 hover:bg-opacity-90 transition-opacity">
-            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <!-- Header con navegación -->
+        <div class="absolute top-8 left-8 right-8 flex justify-between items-center z-20">
+          <router-link to="/" class="bg-black/40 backdrop-blur-sm rounded-full p-3 hover:bg-black/60 transition-all">
+            <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
           </router-link>
         </div>
 
-        <!-- Título y detalles de la serie en la imagen -->
-        <div class="absolute bottom-4 left-4 right-4 text-white p-4">
-          <h2 class="text-3xl md:text-5xl font-bold mb-2 leading-tight">{{ seriesDetails.name }}</h2>
-          <div class="text-lg md:text-xl text-gray-300 flex flex-wrap items-center gap-x-4">
-            <span v-if="seriesDetails.score" class="flex items-center">
-              <svg class="h-5 w-5 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.538 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.783.57-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.381-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z"></path>
-              </svg>
-              {{ seriesDetails.score }}
-            </span>
-            <!-- Usamos firstAired para el año y averageRuntime para la duración del episodio -->
-            <span v-if="seriesDetails.firstAired">· {{ getYearFromDate(seriesDetails.firstAired) }}</span>
-            <span v-if="seriesDetails.averageRuntime">· {{ seriesDetails.averageRuntime }}m</span>
+        <!-- Información principal -->
+        <div class="absolute bottom-0 left-0 right-0 p-12 z-10">
+          <div class="max-w-4xl">
+            <!-- Badge de serie -->
+            <div class="flex items-center gap-3 mb-4">
+              <span class="bg-red-600 text-white text-sm font-bold px-3 py-1 rounded">TV Series</span>
+              <span v-if="seriesDetails.networks && seriesDetails.networks.length > 0" class="text-gray-300 text-sm">
+                {{ seriesDetails.networks[0].name }}
+              </span>
+            </div>
+
+            <!-- Título -->
+            <h1 class="text-6xl font-bold mb-4 leading-tight">{{ seriesDetails.name }}</h1>
+
+            <!-- Metadata -->
+            <div class="flex items-center gap-4 mb-6 flex-wrap">
+              <span v-if="seriesDetails.score" class="bg-yellow-400 text-black text-sm font-bold px-3 py-1 rounded flex items-center gap-2">
+                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.538 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.783.57-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.381-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z"></path>
+                </svg>
+                {{ (seriesDetails.score / 1000).toFixed(1) }}
+              </span>
+              <span v-if="seriesDetails.firstAired" class="text-white text-lg">{{ getYearFromDate(seriesDetails.firstAired) }}</span>
+              <span v-if="episodesData && episodesData.totalSeasons" class="text-white text-lg">• {{ episodesData.totalSeasons }} season{{ episodesData.totalSeasons > 1 ? 's' : '' }}</span>
+              <span v-if="seriesDetails.status && seriesDetails.status.name" class="text-white text-lg">• {{ seriesDetails.status.name }}</span>
+              <span v-if="seriesDetails.averageRuntime" class="text-white text-lg">• {{ seriesDetails.averageRuntime }}m</span>
+            </div>
+
+            <!-- Géneros -->
+            <div v-if="seriesDetails.genres && seriesDetails.genres.length > 0" class="flex flex-wrap gap-3 mb-6">
+              <span v-for="genre in seriesDetails.genres.slice(0, 4)" :key="genre.id" class="text-white text-lg">
+                {{ genre.name }}
+              </span>
+            </div>
+
+            <!-- Descripción -->
+            <p v-if="seriesDetails.overview" class="text-gray-200 text-lg mb-8 max-w-3xl leading-relaxed line-clamp-4">
+              {{ seriesDetails.overview }}
+            </p>
+
+            <!-- Creadores -->
+            <div v-if="seriesDetails.creators && seriesDetails.creators.length > 0" class="text-lg text-gray-300 mb-8">
+              <span class="font-semibold">Creators: </span>
+              <span>{{ seriesDetails.creators.map((c: any) => c.name).join(', ') }}</span>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex items-center gap-6">
+              <!-- Botón principal -->
+              <button class="bg-white text-black font-bold py-4 px-8 rounded-lg text-xl flex items-center gap-3 shadow-lg hover:bg-gray-100 transition-colors">
+                <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                Start watching
+              </button>
+
+              <!-- Botones secundarios -->
+              <button class="flex items-center gap-2 bg-gray-800/80 backdrop-blur-sm text-white font-semibold py-4 px-6 rounded-lg hover:bg-gray-700/80 transition-all" @click="addToWatchlist">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Add to watchlist
+              </button>
+
+              <button class="flex items-center gap-2 bg-gray-800/80 backdrop-blur-sm text-white font-semibold py-4 px-6 rounded-lg hover:bg-gray-700/80 transition-all" @click="toggleWatched">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Mark as watched
+              </button>
+
+              <button class="flex items-center gap-2 bg-gray-800/80 backdrop-blur-sm text-white font-semibold py-4 px-6 rounded-lg hover:bg-gray-700/80 transition-all" @click="toggleFavorite">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                </svg>
+                Add to favorites
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Lo que esta debajo de la imagen -->
-      <div class="px-6 py-8 md:p-8">
-        <!-- Géneros -->
-        <div v-if="seriesDetails.genres && seriesDetails.genres.length > 0" class="mb-6 flex flex-wrap gap-2">
-          <span v-for="genre in seriesDetails.genres" :key="genre.id" class="bg-purple-800 text-purple-100 text-sm px-3 py-1 rounded-full">
-            {{ genre.name }}
-          </span>
-        </div>
-        
-        <!-- Cadena de transmisión (Network) -->
-        <p v-if="seriesDetails.networks && seriesDetails.networks.length > 0" class="text-gray-400 text-sm mb-8">
-          <span class="font-semibold">Cadena:</span>
-          {{ seriesDetails.networks[0].name || "Desconocida" }}
-        </p>
-
-        <!-- Estado de la serie (Ongoing, Ended, etc.) -->
-        <p v-if="seriesDetails.status && seriesDetails.status.name" class="text-gray-400 text-sm mb-8">
-            <span class="font-semibold">Producida:</span>
-            {{ seriesDetails.companies[0].name }}
-        </p>
-        
-        <button
-          class="w-full bg-purple-600 hover:bg-purple-900 text-white font-bold py-3 px-6 rounded-lg text-lg mb-6 transition-colors flex items-center justify-center shadow-lg"
-        >
-          Añadir a Favoritos
-        </button>
-
-        <!-- Botones de acción adicionales -->
-        <div class="flex justify-around items-center space-x-4 mb-8">
-          <button
-            class="flex flex-col items-center text-sm text-gray-400 hover:text-purple-400 transition-colors"
-          >
-            Añadir a ver luego
-          </button>
-          <button
-            class="flex flex-col items-center text-sm text-gray-400 hover:text-purple-400 transition-colors"
-          >
-            Marcar como visto
-          </button>
-        </div>
-
-        <!-- Galería de Arte (Artworks adicionales) -->
-        <div v-if="seriesDetails.artworks && seriesDetails.artworks.length > 0" class="mt-8">
-          <h3 class="text-xl font-semibold mb-4">Galería de Arte:</h3>
-          <div class="flex items-center overflow-x-auto h-[28vh] space-x-4 snap-x snap-mandatory scrollbar-hide px-1">
-            <div
-              v-for="artwork in seriesDetails.artworks"
-              :key="artwork.id"
-              class="snap-start shrink-0 w-40 sm:w-48 md:w-56 transition-transform transform hover:scale-105 hover:z-10 duration-300 ease-in-out rounded-lg overflow-hidden bg-gray-800 cursor-pointer"
-              @click="seriesDetails.image = artwork.image || artwork.thumbnail"
-            >
-              <img
-                v-if="artwork.thumbnail"
-                :src="artwork.thumbnail"
-                :alt="`Artwork ${artwork.id}`"
-                class="w-full h-32 sm:h-40 md:h-48 object-cover"
-              />
+      <!-- Contenido adicional -->
+      <div class="bg-gray-900 -mt-12 relative z-20 rounded-t-3xl">
+        <div class="px-12 pt-16 pb-12">
+          <!-- Galería de Arte -->
+          <div v-if="seriesDetails.artworks && seriesDetails.artworks.length > 0" class="mb-12">
+            <h3 class="text-2xl font-semibold mb-6">Gallery</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               <div
-                v-else
-                class="w-full h-32 sm:h-40 md:h-48 bg-gray-700 flex items-center justify-center text-gray-500 text-xs"
+                v-for="artwork in seriesDetails.artworks.slice(0, 12)"
+                :key="artwork.id"
+                class="aspect-video rounded-lg overflow-hidden bg-gray-800 cursor-pointer hover:scale-105 transition-transform duration-300"
+                @click="seriesDetails.image = artwork.image || artwork.thumbnail"
               >
-                No thumbnail
+                <img
+                  v-if="artwork.thumbnail"
+                  :src="artwork.thumbnail"
+                  :alt="`Artwork ${artwork.id}`"
+                  class="w-full h-full object-cover"
+                />
+                <div
+                  v-else
+                  class="w-full h-full bg-gray-700 flex items-center justify-center text-gray-500 text-sm"
+                >
+                  No image
                 </div>
               </div>
             </div>
           </div>
+
+          <!-- Sección de episodios -->
+          <EpisodesSection 
+            :episodesBySeasons="episodesData?.episodesBySeasons || {}"
+            :loading="loadingEpisodes"
+            :error="errorEpisodes"
+            :seriesId="parseInt(seriesId as string)"
+          />
         </div>
-        
-        <!-- Sección de episodios para escritorio -->
-        <EpisodesSection 
-          :episodesBySeasons="episodesData?.episodesBySeasons || {}"
-          :loading="loadingEpisodes"
-          :error="errorEpisodes"
-        />
       </div>
     </div>
   </div>
@@ -348,5 +443,20 @@ const toggleFavorite = () => {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Safari y Chrome */
+}
+
+/* Utilidad para limitar líneas de texto */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Mejor aspecto para los gradientes en móvil */
+@media (max-width: 768px) {
+  .bg-gradient-to-t {
+    background: linear-gradient(to top, rgb(17, 24, 39) 0%, rgba(17, 24, 39, 0.9) 30%, rgba(17, 24, 39, 0.7) 60%, transparent 100%);
+  }
 }
 </style>
