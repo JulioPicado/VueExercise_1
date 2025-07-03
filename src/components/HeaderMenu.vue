@@ -6,7 +6,7 @@
         <router-link to="/" class="text-gray-300 hover:text-white" title="Explore">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l-4 8-4-4 8-4z"/></svg>
         </router-link>
-        <router-link to="/watchlist" class="text-gray-300 hover:text-white" title="My shows">
+        <router-link to="/myshows/watchlist" class="text-gray-300 hover:text-white" title="My shows">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6"><rect x="3" y="5" width="18" height="12" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9l5 3-5 3V9z"/></svg>
         </router-link>
         <router-link to="/calendar" class="text-gray-300 hover:text-white" title="Calendar">

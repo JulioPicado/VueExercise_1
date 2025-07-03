@@ -166,13 +166,7 @@ const toggleFavorite = () => {
         <span v-if="seriesDetails && seriesDetails.networks && seriesDetails.networks.length > 0" class="text-red-500 font-bold">{{ seriesDetails.networks[0].name }}</span>
         <span class="text-xs text-gray-400">TV-series</span>
       </div>
-      <div class="flex items-center justify-center gap-2 mb-2">
-        <span v-if="seriesDetails && seriesDetails.score" class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded">IMDb {{ seriesDetails.score }}</span>
-        <span v-if="seriesDetails && seriesDetails.year" class="text-gray-300 text-xs">{{ seriesDetails.year }}</span>
-        <span v-if="seriesDetails && seriesDetails.seasons" class="text-gray-300 text-xs">· {{ seriesDetails.seasons }} season{{ seriesDetails.seasons > 1 ? 's' : '' }}</span>
-        <span v-if="seriesDetails && seriesDetails.status && seriesDetails.status.name" class="text-gray-300 text-xs">· {{ seriesDetails.status.name }}</span>
-        <span v-if="seriesDetails && seriesDetails.averageRuntime" class="text-gray-300 text-xs">· {{ seriesDetails.averageRuntime }}m</span>
-      </div>
+      
       <h2 class="text-2xl font-bold mb-2 leading-tight">{{ seriesDetails?.name }}</h2>
       <!-- Géneros -->
       <div v-if="seriesDetails && seriesDetails.genres && seriesDetails.genres.length > 0" class="mb-3 flex flex-wrap gap-2 justify-center">
