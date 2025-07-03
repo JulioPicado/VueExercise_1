@@ -142,9 +142,8 @@ onMounted(() => {
 });
 
 watch(movieDetails, (val) => {
-  if (val) {
-    console.log('Detalles de la película:', val);
-  }
+  // Eliminar el console.log que muestra los detalles de la película
+  // console.log('Detalles de la película:', val);
 }, { immediate: true });
 
 function handleTrailerClick(url: string) {

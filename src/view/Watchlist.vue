@@ -1,5 +1,5 @@
 <template>
-  <!-- Solo móvil -->
+  <!-- Móvil -->
   <div class="min-h-screen bg-[#353542] text-white max-w-xs mx-auto md:hidden flex flex-col pb-20">
     <!-- Tabs -->
     <div class="flex items-center border-b border-gray-700 mb-2 px-4 py-2">
@@ -105,6 +105,70 @@
       </button>
     </nav>
   </div>
+
+  <!-- Escritorio -->
+  <div class="min-h-screen bg-[#353542] text-white max-w-6xl mx-auto hidden md:flex flex-col pb-20 p-8">
+    <div class="flex items-center gap-4 mb-8">
+      <h1 class="text-3xl font-bold">My Shows</h1>
+      <span class="text-lg text-gray-400">({{ activeTab === 'movies' ? 'Movies' : 'TV Series' }})</span>
+    </div>
+    <!-- Botones de pestaña -->
+    <div class="flex gap-2 mb-6">
+      <button
+        @click="setActiveTab('tv-series')"
+        :class="{'bg-blue-500 text-white': activeTab === 'tv-series', 'bg-gray-800 text-gray-400': activeTab !== 'tv-series'}"
+        class="px-6 py-2 rounded-lg font-semibold transition-colors duration-200"
+      >
+        TV series
+      </button>
+      <button
+        @click="setActiveTab('movies')"
+        :class="{'bg-blue-500 text-white': activeTab === 'movies', 'bg-gray-800 text-gray-400': activeTab !== 'movies'}"
+        class="px-6 py-2 rounded-lg font-semibold transition-colors duration-200"
+      >
+        Movies
+      </button>
+    </div>
+    <!-- Botones de lista -->
+    <div class="flex gap-2 mb-6">
+      <button
+        @click="activeList = 'watchlist'"
+        :class="{'bg-purple-500 text-white': activeList === 'watchlist', 'bg-gray-800 text-gray-400': activeList !== 'watchlist'}"
+        class="px-6 py-2 rounded-lg font-semibold transition-colors duration-200"
+      >
+        Watchlist
+      </button>
+      <button
+        @click="activeList = 'watched'"
+        :class="{'bg-green-500 text-white': activeList === 'watched', 'bg-gray-800 text-gray-400': activeList !== 'watched'}"
+        class="px-6 py-2 rounded-lg font-semibold transition-colors duration-200"
+      >
+        Watched
+      </button>
+      <button
+        @click="activeList = 'favorites'"
+        :class="{'bg-yellow-500 text-white': activeList === 'favorites', 'bg-gray-800 text-gray-400': activeList !== 'favorites'}"
+        class="px-6 py-2 rounded-lg font-semibold transition-colors duration-200"
+      >
+        Favorites
+      </button>
+    </div>
+    <div v-if="filteredShows.length === 0" class="flex-1 flex flex-col items-center justify-center text-gray-400 text-center p-8">
+      <span>No items in this list.</span>
+    </div>
+    <div v-else class="grid grid-cols-4 gap-6 items-start">
+      <div v-for="show in filteredShows" :key="`${show.type}-${show.id}`" class="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow cursor-pointer flex flex-col flex-none max-w-full" @click="navigateToDetails(show)">
+        <div class="relative w-full h-56 bg-gray-700">
+          <img :src="show.image" :alt="show.name" class="w-full h-full object-cover" />
+          <span v-if="show.isFavorite" class="absolute top-1 right-1 bg-yellow-400 text-white text-xs px-1.5 py-0.5 rounded-full">★</span>
+        </div>
+        <div class="px-3 py-2 flex-1 flex flex-col justify-between">
+          <p class="text-base font-semibold text-white truncate">{{ show.name }}</p>
+          <p class="text-xs text-gray-400">{{ show.year }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -190,5 +254,16 @@ onMounted(() => {
 .custom-scrollbar-horizontal {
   scrollbar-color: rgba(120,120,120,0.35) transparent;
   scrollbar-width: thin;
+}
+
+/* Ajustes para tamaño fijo */
+.watching-show {
+  width: 120px;
+  margin: 0 auto;
+}
+.watching-show img {
+  width: 120px;
+  height: 180px;
+  border-radius: 8px;
 }
 </style> 
