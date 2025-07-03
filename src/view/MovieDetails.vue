@@ -52,57 +52,105 @@ const isWatched = computed(() => {
 });
 
 // Funciones para manejar las listas
-const toggleFavorite = () => {
+const toggleFavorite = async () => {
   if (!movieDetails.value) return;
   
-  const show: Show = {
-    id: movieDetails.value.id,
-    name: movieDetails.value.name,
-    image: movieDetails.value.image,
-    type: 'movie',
-    year: movieDetails.value.year
-  };
-  
-  if (isFavorite.value) {
-    userStore.removeFromFavorites(movieDetails.value.id, 'movie');
-  } else {
-    userStore.addToFavorites(show);
+  try {
+    const show: Show = {
+      id: movieDetails.value.id,
+      name: movieDetails.value.name,
+      image: movieDetails.value.image,
+      type: 'movie',
+      year: movieDetails.value.year
+    };
+    
+    console.log(`🔄 Toggle favoritos: ${movieDetails.value.name} (movie)`);
+    
+    // Verificar estado actual desde la BD (asíncrono)
+    const isCurrentlyFavorite = await userStore.checkIsFavorite(movieDetails.value.id, 'movie');
+    
+    if (isCurrentlyFavorite) {
+      // Si ya está, quitarlo
+      await userStore.removeFromFavorites(movieDetails.value.id, 'movie');
+      console.log(`❌ ${movieDetails.value.name} removido de favoritos`);
+    } else {
+      // Si no está, agregarlo
+      await userStore.addToFavorites(show);
+      console.log(`✅ ${movieDetails.value.name} agregado a favoritos`);
+    }
+    
+    // Forzar actualización del caché local
+    await userStore.loadUserData();
+  } catch (error) {
+    console.error('Error en toggleFavorite:', error);
   }
 };
 
-const toggleWatchlist = () => {
+const toggleWatchlist = async () => {
   if (!movieDetails.value) return;
   
-  const show: Show = {
-    id: movieDetails.value.id,
-    name: movieDetails.value.name,
-    image: movieDetails.value.image,
-    type: 'movie',
-    year: movieDetails.value.year
-  };
-  
-  if (isInWatchlist.value) {
-    userStore.removeFromWatchlist(movieDetails.value.id, 'movie');
-  } else {
-    userStore.addToWatchlist(show);
+  try {
+    const show: Show = {
+      id: movieDetails.value.id,
+      name: movieDetails.value.name,
+      image: movieDetails.value.image,
+      type: 'movie',
+      year: movieDetails.value.year
+    };
+    
+    console.log(`🔄 Toggle watchlist: ${movieDetails.value.name} (movie)`);
+    
+    // Verificar estado actual desde la BD (asíncrono)
+    const isCurrentlyInWatchlist = await userStore.checkIsInWatchlist(movieDetails.value.id, 'movie');
+    
+    if (isCurrentlyInWatchlist) {
+      // Si ya está, quitarlo
+      await userStore.removeFromWatchlist(movieDetails.value.id, 'movie');
+      console.log(`❌ ${movieDetails.value.name} removido de watchlist`);
+    } else {
+      // Si no está, agregarlo
+      await userStore.addToWatchlist(show);
+      console.log(`✅ ${movieDetails.value.name} agregado a watchlist`);
+    }
+    
+    // Forzar actualización del caché local
+    await userStore.loadUserData();
+  } catch (error) {
+    console.error('Error en toggleWatchlist:', error);
   }
 };
 
-const toggleWatched = () => {
+const toggleWatched = async () => {
   if (!movieDetails.value) return;
   
-  const show: Show = {
-    id: movieDetails.value.id,
-    name: movieDetails.value.name,
-    image: movieDetails.value.image,
-    type: 'movie',
-    year: movieDetails.value.year
-  };
-  
-  if (isWatched.value) {
-    userStore.removeFromWatched(movieDetails.value.id, 'movie');
-  } else {
-    userStore.addToWatched(show);
+  try {
+    const show: Show = {
+      id: movieDetails.value.id,
+      name: movieDetails.value.name,
+      image: movieDetails.value.image,
+      type: 'movie',
+      year: movieDetails.value.year
+    };
+    
+    console.log(`🔄 Toggle watched: ${movieDetails.value.name} (movie)`);
+    
+    // Verificar estado actual desde la BD (asíncrono)
+    const isCurrentlyWatched = await userStore.checkIsWatched(movieDetails.value.id, 'movie');
+    
+    if (isCurrentlyWatched) {
+      // Si ya está, quitarlo
+      await userStore.removeFromWatched(movieDetails.value.id, 'movie');
+      console.log(`❌ ${movieDetails.value.name} removido de watched`);
+    } else {
+      // Si no está, agregarlo
+      await userStore.addToWatched(show);
+      console.log(`✅ ${movieDetails.value.name} agregado a watched`);
+    }
+    
+    // Forzar actualización del caché local
+    await userStore.loadUserData();
+  } catch (error) {
+    console.error('Error en toggleWatched:', error);
   }
 };
 
@@ -234,31 +282,40 @@ function handleTrailerClick(url: string) {
         <!-- Botones de acción -->
         <div class="flex justify-center gap-8 mb-4">
           <button class="flex flex-col items-center gap-1" @click="toggleWatchlist">
-            <div class="bg-gray-800/80 backdrop-blur-sm rounded-full p-3">
+            <div :class="[
+              'backdrop-blur-sm rounded-full p-3 transition-colors',
+              isInWatchlist ? 'bg-blue-600 text-white' : 'bg-gray-800/80 text-gray-300'
+            ]">
               <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
             </div>
-            <span class="text-xs text-gray-300">Add to watchlist</span>
+            <span class="text-xs text-gray-300">{{ isInWatchlist ? 'Remove from watchlist' : 'Add to watchlist' }}</span>
           </button>
           
           <button class="flex flex-col items-center gap-1" @click="toggleWatched">
-            <div class="bg-gray-800/80 backdrop-blur-sm rounded-full p-3">
+            <div :class="[
+              'backdrop-blur-sm rounded-full p-3 transition-colors',
+              isWatched ? 'bg-green-600 text-white' : 'bg-gray-800/80 text-gray-300'
+            ]">
               <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
             </div>
-            <span class="text-xs text-gray-300">Mark as watched</span>
+            <span class="text-xs text-gray-300">{{ isWatched ? 'Remove from watched' : 'Mark as watched' }}</span>
           </button>
           
           <button class="flex flex-col items-center gap-1" @click="toggleFavorite">
-            <div class="bg-gray-800/80 backdrop-blur-sm rounded-full p-3">
+            <div :class="[
+              'backdrop-blur-sm rounded-full p-3 transition-colors',
+              isFavorite ? 'bg-red-600 text-white' : 'bg-gray-800/80 text-gray-300'
+            ]">
               <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
               </svg>
             </div>
-            <span class="text-xs text-gray-300">Add to favorites</span>
+            <span class="text-xs text-gray-300">{{ isFavorite ? 'Remove from favorites' : 'Add to favorites' }}</span>
           </button>
         </div>
       </div>
@@ -398,27 +455,36 @@ function handleTrailerClick(url: string) {
               </button>
 
               <!-- Botones secundarios -->
-              <button class="flex items-center gap-2 bg-gray-800/80 backdrop-blur-sm text-white font-semibold py-4 px-6 rounded-lg hover:bg-gray-700/80 transition-all" @click="toggleWatchlist">
+              <button :class="[
+                'flex items-center gap-2 font-semibold py-4 px-6 rounded-lg transition-all',
+                isInWatchlist ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-800/80 backdrop-blur-sm text-white hover:bg-gray-700/80'
+              ]" @click="toggleWatchlist">
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                Add to watchlist
+                {{ isInWatchlist ? 'Remove from watchlist' : 'Add to watchlist' }}
               </button>
 
-              <button class="flex items-center gap-2 bg-gray-800/80 backdrop-blur-sm text-white font-semibold py-4 px-6 rounded-lg hover:bg-gray-700/80 transition-all" @click="toggleWatched">
+              <button :class="[
+                'flex items-center gap-2 font-semibold py-4 px-6 rounded-lg transition-all',
+                isWatched ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-800/80 backdrop-blur-sm text-white hover:bg-gray-700/80'
+              ]" @click="toggleWatched">
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
-                Mark as watched
-                </button>
+                {{ isWatched ? 'Remove from watched' : 'Mark as watched' }}
+              </button>
 
-              <button class="flex items-center gap-2 bg-gray-800/80 backdrop-blur-sm text-white font-semibold py-4 px-6 rounded-lg hover:bg-gray-700/80 transition-all" @click="toggleFavorite">
+              <button :class="[
+                'flex items-center gap-2 font-semibold py-4 px-6 rounded-lg transition-all',
+                isFavorite ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-800/80 backdrop-blur-sm text-white hover:bg-gray-700/80'
+              ]" @click="toggleFavorite">
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                 </svg>
-                Add to favorites
-                </button>
+                {{ isFavorite ? 'Remove from favorites' : 'Add to favorites' }}
+              </button>
               </div>
             </div>
         </div>

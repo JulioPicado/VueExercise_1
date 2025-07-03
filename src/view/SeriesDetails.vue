@@ -91,49 +91,123 @@ const getYearFromDate = (dateString: string | null) => {
   return dateString ? new Date(dateString).getFullYear() : 'N/A';
 };
 
-// Funciones para los botones inferiores
-const addToWatchlist = () => {
+// Funciones para los botones - usando la misma lógica que CardSection.vue
+const toggleWatchlist = async () => {
   if (!seriesDetails.value) return;
-  const show: Show = {
-    id: seriesDetails.value.id,
-    name: seriesDetails.value.name,
-    image: seriesDetails.value.image,
-    type: 'series',
-    year: seriesDetails.value.year
-  };
-  userStore.addToWatchlist(show);
-};
-
-const toggleWatched = () => {
-  if (!seriesDetails.value) return;
-  const show: Show = {
-    id: seriesDetails.value.id,
-    name: seriesDetails.value.name,
-    image: seriesDetails.value.image,
-    type: 'series',
-    year: seriesDetails.value.year
-  };
-  if (userStore.isWatched(show.id, 'series')) {
-    userStore.removeFromWatched(show.id, 'series');
-  } else {
-    userStore.addToWatched(show);
+  
+  try {
+    const showData: Show = {
+      id: seriesDetails.value.id,
+      name: seriesDetails.value.name,
+      image: seriesDetails.value.image,
+      type: 'series',
+      year: seriesDetails.value.year
+    };
+    
+    console.log(`🔄 Toggle watchlist: ${seriesDetails.value.name} (series)`);
+    
+    // Verificar estado actual desde la BD (asíncrono)
+    const isCurrentlyInWatchlist = await userStore.checkIsInWatchlist(seriesDetails.value.id, 'series');
+    
+    if (isCurrentlyInWatchlist) {
+      // Si ya está, quitarlo
+      await userStore.removeFromWatchlist(seriesDetails.value.id, 'series');
+      console.log(`❌ ${seriesDetails.value.name} removido de watchlist`);
+    } else {
+      // Si no está, agregarlo
+      await userStore.addToWatchlist(showData);
+      console.log(`✅ ${seriesDetails.value.name} agregado a watchlist`);
+    }
+    
+    // Forzar actualización del caché local
+    await userStore.loadUserData();
+  } catch (error) {
+    console.error('Error en toggleWatchlist:', error);
   }
 };
 
-const toggleFavorite = () => {
+const toggleWatched = async () => {
   if (!seriesDetails.value) return;
-  const show: Show = {
-    id: seriesDetails.value.id,
-    name: seriesDetails.value.name,
-    image: seriesDetails.value.image,
-    type: 'series',
-    year: seriesDetails.value.year
-  };
-  if (userStore.isFavorite(show.id, 'series')) {
-    userStore.removeFromFavorites(show.id, 'series');
-  } else {
-    userStore.addToFavorites(show);
+  
+  try {
+    const showData: Show = {
+      id: seriesDetails.value.id,
+      name: seriesDetails.value.name,
+      image: seriesDetails.value.image,
+      type: 'series',
+      year: seriesDetails.value.year
+    };
+    
+    console.log(`🔄 Toggle watched: ${seriesDetails.value.name} (series)`);
+    
+    // Verificar estado actual desde la BD (asíncrono)
+    const isCurrentlyWatched = await userStore.checkIsWatched(seriesDetails.value.id, 'series');
+    
+    if (isCurrentlyWatched) {
+      // Si ya está, quitarlo
+      await userStore.removeFromWatched(seriesDetails.value.id, 'series');
+      console.log(`❌ ${seriesDetails.value.name} removido de watched`);
+    } else {
+      // Si no está, agregarlo
+      await userStore.addToWatched(showData);
+      console.log(`✅ ${seriesDetails.value.name} agregado a watched`);
+    }
+    
+    // Forzar actualización del caché local
+    await userStore.loadUserData();
+  } catch (error) {
+    console.error('Error en toggleWatched:', error);
   }
+};
+
+const toggleFavorite = async () => {
+  if (!seriesDetails.value) return;
+  
+  try {
+    const showData: Show = {
+      id: seriesDetails.value.id,
+      name: seriesDetails.value.name,
+      image: seriesDetails.value.image,
+      type: 'series',
+      year: seriesDetails.value.year
+    };
+    
+    console.log(`🔄 Toggle favoritos: ${seriesDetails.value.name} (series)`);
+    
+    // Verificar estado actual desde la BD (asíncrono)
+    const isCurrentlyFavorite = await userStore.checkIsFavorite(seriesDetails.value.id, 'series');
+    
+    if (isCurrentlyFavorite) {
+      // Si ya está, quitarlo
+      await userStore.removeFromFavorites(seriesDetails.value.id, 'series');
+      console.log(`❌ ${seriesDetails.value.name} removido de favoritos`);
+    } else {
+      // Si no está, agregarlo
+      await userStore.addToFavorites(showData);
+      console.log(`✅ ${seriesDetails.value.name} agregado a favoritos`);
+    }
+    
+    // Forzar actualización del caché local
+    await userStore.loadUserData();
+  } catch (error) {
+    console.error('Error en toggleFavorite:', error);
+  }
+};
+
+// Funciones para verificar el estado actual
+const isFavorite = () => {
+  if (!seriesDetails.value) return false;
+  return userStore.isFavorite(seriesDetails.value.id, 'series');
+};
+
+const isInWatchlist = () => {
+  if (!seriesDetails.value) return false;
+  return userStore.isInWatchlist(seriesDetails.value.id, 'series');
+};
+
+const isWatched = () => {
+  if (!seriesDetails.value) return false;
+  return userStore.isWatched(seriesDetails.value.id, 'series');
 };
 </script>
 
@@ -221,32 +295,41 @@ const toggleFavorite = () => {
         
         <!-- Botones de acción -->
         <div class="flex justify-center gap-8 mb-4">
-          <button class="flex flex-col items-center gap-1" @click="addToWatchlist">
-            <div class="bg-gray-800/80 backdrop-blur-sm rounded-full p-3">
+          <button class="flex flex-col items-center gap-1" @click="toggleWatchlist">
+            <div :class="[
+              'backdrop-blur-sm rounded-full p-3 transition-colors',
+              isInWatchlist() ? 'bg-blue-600 text-white' : 'bg-gray-800/80 text-gray-300'
+            ]">
               <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
             </div>
-            <span class="text-xs text-gray-300">Add to watchlist</span>
+            <span class="text-xs text-gray-300">{{ isInWatchlist() ? 'Remove from watchlist' : 'Add to watchlist' }}</span>
           </button>
           
           <button class="flex flex-col items-center gap-1" @click="toggleWatched">
-            <div class="bg-gray-800/80 backdrop-blur-sm rounded-full p-3">
+            <div :class="[
+              'backdrop-blur-sm rounded-full p-3 transition-colors',
+              isWatched() ? 'bg-green-600 text-white' : 'bg-gray-800/80 text-gray-300'
+            ]">
               <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
             </div>
-            <span class="text-xs text-gray-300">Mark as watched</span>
+            <span class="text-xs text-gray-300">{{ isWatched() ? 'Remove from watched' : 'Mark as watched' }}</span>
           </button>
           
           <button class="flex flex-col items-center gap-1" @click="toggleFavorite">
-            <div class="bg-gray-800/80 backdrop-blur-sm rounded-full p-3">
+            <div :class="[
+              'backdrop-blur-sm rounded-full p-3 transition-colors',
+              isFavorite() ? 'bg-red-600 text-white' : 'bg-gray-800/80 text-gray-300'
+            ]">
               <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
               </svg>
             </div>
-            <span class="text-xs text-gray-300">Add to favorites</span>
+            <span class="text-xs text-gray-300">{{ isFavorite() ? 'Remove from favorites' : 'Add to favorites' }}</span>
           </button>
         </div>
       </div>
@@ -366,26 +449,35 @@ const toggleFavorite = () => {
               </button>
 
               <!-- Botones secundarios -->
-              <button class="flex items-center gap-2 bg-gray-800/80 backdrop-blur-sm text-white font-semibold py-4 px-6 rounded-lg hover:bg-gray-700/80 transition-all" @click="addToWatchlist">
+              <button :class="[
+                'flex items-center gap-2 font-semibold py-4 px-6 rounded-lg transition-all',
+                isInWatchlist() ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-800/80 backdrop-blur-sm text-white hover:bg-gray-700/80'
+              ]" @click="toggleWatchlist">
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                Add to watchlist
+                {{ isInWatchlist() ? 'Remove from watchlist' : 'Add to watchlist' }}
               </button>
 
-              <button class="flex items-center gap-2 bg-gray-800/80 backdrop-blur-sm text-white font-semibold py-4 px-6 rounded-lg hover:bg-gray-700/80 transition-all" @click="toggleWatched">
+              <button :class="[
+                'flex items-center gap-2 font-semibold py-4 px-6 rounded-lg transition-all',
+                isWatched() ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-800/80 backdrop-blur-sm text-white hover:bg-gray-700/80'
+              ]" @click="toggleWatched">
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
-                Mark as watched
+                {{ isWatched() ? 'Remove from watched' : 'Mark as watched' }}
               </button>
 
-              <button class="flex items-center gap-2 bg-gray-800/80 backdrop-blur-sm text-white font-semibold py-4 px-6 rounded-lg hover:bg-gray-700/80 transition-all" @click="toggleFavorite">
+              <button :class="[
+                'flex items-center gap-2 font-semibold py-4 px-6 rounded-lg transition-all',
+                isFavorite() ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-800/80 backdrop-blur-sm text-white hover:bg-gray-700/80'
+              ]" @click="toggleFavorite">
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                 </svg>
-                Add to favorites
+                {{ isFavorite() ? 'Remove from favorites' : 'Add to favorites' }}
               </button>
             </div>
           </div>

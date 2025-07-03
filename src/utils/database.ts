@@ -287,6 +287,33 @@ export const removeWatchedMovie = async (userId: string, movieId: number): Promi
   });
 };
 
+// Funciones para series completas como "watched"
+export const addWatchedSeries = async (userId: string, seriesId: number): Promise<void> => {
+  // Usamos la tabla user_watched_episodes con un episodio especial (id = 0) para marcar serie completa
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await client.execute({
+    sql: 'INSERT OR REPLACE INTO user_watched_episodes (id, user_id, series_id, episode_id, season_number, episode_number, watched_at, rating, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    args: [id, userId, seriesId, 0, 0, 0, now, null, 'SERIES_COMPLETE']
+  });
+};
+
+export const removeWatchedSeries = async (userId: string, seriesId: number): Promise<void> => {
+  await client.execute({
+    sql: 'DELETE FROM user_watched_episodes WHERE user_id = ? AND series_id = ? AND episode_id = 0',
+    args: [userId, seriesId]
+  });
+};
+
+export const isSeriesWatched = async (userId: string, seriesId: number): Promise<boolean> => {
+  const result = await client.execute({
+    sql: 'SELECT COUNT(*) as count FROM user_watched_episodes WHERE user_id = ? AND series_id = ? AND episode_id = 0',
+    args: [userId, seriesId]
+  });
+  
+  return (result.rows[0] as any).count > 0;
+};
+
 // Funciones para watchlist
 export const addToWatchlist = async (userId: string, movieId?: number, seriesId?: number): Promise<void> => {
   // Verificar si ya existe
@@ -422,17 +449,19 @@ export const getUserWatchedMovies = async (userId: string) => {
   return result.rows as unknown as { movie_id: number, watched_at: string, rating: number | null, notes: string | null }[];
 };
 
+export const getUserWatchedSeries = async (userId: string) => {
+  const result = await client.execute({
+    sql: 'SELECT series_id, watched_at FROM user_watched_episodes WHERE user_id = ? AND episode_id = 0 ORDER BY watched_at DESC',
+    args: [userId]
+  });
+  
+  return result.rows as unknown as { series_id: number, watched_at: string }[];
+};
+
 // Función para crear usuario demo para pruebas
 export const createDemoUser = async (): Promise<void> => {
   try {
-    // Verificar si ya existe el usuario demo
-    const existingUser = await getUserByEmail('demo@example.com');
-    if (existingUser) {
-      console.log('👤 Usuario demo ya existe');
-      return;
-    }
-    
-    // Crear usuario demo con contraseña hasheada
+    // Hashear la contraseña demo
     const encoder = new TextEncoder();
     const data = encoder.encode('demo123');
     const hash = await crypto.subtle.digest('SHA-256', data);
@@ -440,6 +469,24 @@ export const createDemoUser = async (): Promise<void> => {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     
+    // Verificar si ya existe el usuario demo
+    const existingUser = await getUserByEmail('demo@example.com');
+    if (existingUser) {
+      // Si existe, verificar si tiene la contraseña correcta (hasheada)
+      if (existingUser.password !== hashedPassword) {
+        console.log('🔄 Actualizando contraseña del usuario demo...');
+        await client.execute({
+          sql: 'UPDATE users SET password = ? WHERE email = ?',
+          args: [hashedPassword, 'demo@example.com']
+        });
+        console.log('✅ Contraseña del usuario demo actualizada');
+      } else {
+        console.log('👤 Usuario demo ya existe con contraseña correcta');
+      }
+      return;
+    }
+    
+    // Crear usuario demo nuevo
     await createUser({
       name: 'Usuario Demo',
       email: 'demo@example.com',
@@ -448,7 +495,33 @@ export const createDemoUser = async (): Promise<void> => {
     
     console.log('👤 Usuario demo creado: demo@example.com / demo123');
   } catch (error) {
-    console.error('❌ Error creando usuario demo:', error);
+    console.error('❌ Error creando/actualizando usuario demo:', error);
+  }
+};
+
+// Función para hashear contraseñas (misma que en useAuth.ts)
+export const hashPassword = async (password: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+};
+
+// Función para actualizar contraseña de cualquier usuario
+export const updateUserPassword = async (email: string, newPassword: string): Promise<boolean> => {
+  try {
+    const hashedPassword = await hashPassword(newPassword);
+    const result = await client.execute({
+      sql: 'UPDATE users SET password = ? WHERE email = ?',
+      args: [hashedPassword, email]
+    });
+    
+    return result.rowsAffected > 0;
+  } catch (error) {
+    console.error('❌ Error actualizando contraseña:', error);
+    return false;
   }
 };
 

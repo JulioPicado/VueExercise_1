@@ -146,6 +146,7 @@ const handleRegister = async () => {
   border: 2px solid #e1e5e9;
   border-radius: 8px;
   font-size: 16px;
+  color: #000;
   transition: border-color 0.3s ease;
 }
 
