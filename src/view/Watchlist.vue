@@ -2,9 +2,29 @@
   <!-- Solo móvil -->
   <div class="min-h-screen bg-[#353542] text-white max-w-xs mx-auto md:hidden flex flex-col pb-20">
     <!-- Tabs -->
-    <div class="flex items-center border-b border-gray-700 mb-2">
-      <button :class="['flex-1 py-2 text-center font-semibold', activeTab === 'tv-series' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400']" @click="activeTab = 'tv-series'">TV series</button>
-      <button :class="['flex-1 py-2 text-center font-semibold', activeTab === 'movies' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400']" @click="activeTab = 'movies'">Movies</button>
+    <div class="flex items-center border-b border-gray-700 mb-2 px-4 py-2">
+      <button 
+        :class="[
+          'flex-1 py-3 px-4 text-center font-semibold transition-all duration-200 rounded-lg mx-1', 
+          activeTab === 'tv-series' 
+            ? 'text-white bg-blue-500/20 border-b-2 border-blue-500' 
+            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
+        ]" 
+        @click.stop="setActiveTab('tv-series')"
+      >
+        TV series
+      </button>
+      <button 
+        :class="[
+          'flex-1 py-3 px-4 text-center font-semibold transition-all duration-200 rounded-lg mx-1', 
+          activeTab === 'movies' 
+            ? 'text-white bg-blue-500/20 border-b-2 border-blue-500' 
+            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
+        ]" 
+        @click.stop="setActiveTab('movies')"
+      >
+        Movies
+      </button>
     </div>
     <!-- Carrusel de listas con pósters reales -->
     <div class="flex items-center overflow-x-auto gap-4 pb-2 mb-4 custom-scrollbar-horizontal">
@@ -120,6 +140,11 @@ const filteredShows = computed(() => {
 
 const watchingShows = computed(() => userStore.watchlist.filter(show => !userStore.isWatched(show.id, show.type)));
 
+const setActiveTab = (tab: 'tv-series' | 'movies') => {
+  activeTab.value = tab;
+  console.log('🔄 Tab cambiado a:', tab);
+};
+
 const goToList = (list: 'watchlist' | 'watched' | 'favorites') => {
   const type = activeTab.value === 'movies' ? 'movies' : 'tv-series';
   router.push(`/myshows/${list}/${type}`);
@@ -134,7 +159,12 @@ const navigateToDetails = (show: Show) => {
 };
 
 onMounted(() => {
-  userStore.loadFromLocalStorage();
+  // Cargar datos del usuario al montar el componente
+  console.log('📺 Watchlist montado, datos del usuario:', {
+    watchlist: userStore.watchlist.length,
+    favorites: userStore.favorites.length,
+    watched: userStore.watched.length
+  });
 });
 </script>
 
