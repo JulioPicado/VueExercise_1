@@ -365,6 +365,22 @@ export const isEpisodeWatched = async (userId: string, episodeId: number): Promi
   return (result.rows[0] as any).count > 0;
 };
 
+export const removeWatchedEpisode = async (userId: string, episodeId: number): Promise<void> => {
+  await client.execute({
+    sql: 'DELETE FROM user_watched_episodes WHERE user_id = ? AND episode_id = ?',
+    args: [userId, episodeId]
+  });
+};
+
+export const getSeriesWatchedEpisodes = async (userId: string, seriesId: number): Promise<{ episode_id: number, watched_at: string }[]> => {
+  const result = await client.execute({
+    sql: 'SELECT episode_id, watched_at FROM user_watched_episodes WHERE user_id = ? AND series_id = ? ORDER BY watched_at DESC',
+    args: [userId, seriesId]
+  });
+  
+  return result.rows as unknown as { episode_id: number, watched_at: string }[];
+};
+
 export const getSeriesProgress = async (userId: string, seriesId: number): Promise<{ seasonNumber: number, watchedCount: number }[]> => {
   const result = await client.execute({
     sql: `SELECT season_number, COUNT(*) as watched_count 
