@@ -78,7 +78,7 @@ const activeTab = ref(props.type || 'tv-series');
   <!-- Escritorio -->
   <div v-else class="min-h-screen bg-[#353542] text-white max-w-6xl mx-auto flex flex-col pb-20 p-8">
     <div class="flex items-center gap-4 mb-8">
-      <h1 class="text-3xl font-bold">My </h1>
+      <h1 class="text-3xl font-bold">My Shows</h1>
       <span class="text-lg text-gray-400">({{ activeTab === 'movies' ? 'Movies' : 'TV Series' }})</span>
     </div>
     <!-- Botones de pestaña -->

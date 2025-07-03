@@ -42,12 +42,6 @@
         <p>¿No tienes una cuenta? 
           <router-link to="/register" class="link">Regístrate aquí</router-link>
         </p>
-        <div class="demo-section">
-          <p class="demo-text">🧪 Para pruebas rápidas:</p>
-          <button @click="loginDemo" class="btn-demo" :disabled="isLoading">
-            Usar usuario demo
-          </button>
-        </div>
       </div>
     </div>
   </div>
@@ -68,21 +62,6 @@ const credentials = ref({
 
 const handleLogin = async () => {
   clearError();
-  
-  const success = await login(credentials.value);
-  
-  if (success) {
-    router.push('/');
-  }
-};
-
-const loginDemo = async () => {
-  clearError();
-  
-  credentials.value = {
-    email: 'demo@example.com',
-    password: 'demo123'
-  };
   
   const success = await login(credentials.value);
   
@@ -210,38 +189,5 @@ const loginDemo = async () => {
 
 .link:hover {
   text-decoration: underline;
-}
-
-.demo-section {
-  margin-top: 20px;
-  text-align: center;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
-}
-
-.demo-text {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 10px;
-}
-
-.btn-demo {
-  background: #28a745;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.btn-demo:hover:not(:disabled) {
-  background: #218838;
-}
-
-.btn-demo:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 </style> 

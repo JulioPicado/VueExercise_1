@@ -188,7 +188,7 @@
     </div>
     
     <!-- Sección Watching en escritorio -->
-    <div v-if="watchingShows.length > 0 && activeTab === 'tv-series'" class="mb-8">
+    <div v-if="watchingShows.length > 0" class="mb-8">
       <h3 class="text-xl font-semibold mb-4">Currently Watching</h3>
       <div class="grid grid-cols-6 gap-4">
         <div v-for="show in watchingShows" :key="show.id" class="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow cursor-pointer flex flex-col" @click="navigateToDetails(show)">
