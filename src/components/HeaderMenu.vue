@@ -1,6 +1,21 @@
 <template>
-  <div class="p-4 flex items-center justify-center bg-transparent min-w-full max-w-xs">
-    <div class="flex items-center bg-[#353542] rounded-2xl px-4 h-12 w-full max-w-xs shadow-md relative">
+  <div class="p-4 flex items-center justify-center bg-transparent w-full">
+    <div class="flex items-center bg-[#353542] rounded-2xl px-4 h-12 w-full max-w-2xl shadow-md relative">
+      <!-- Iconos de navegación solo en escritorio, ahora a la izquierda -->
+      <div class="hidden md:flex items-center gap-4 mr-4">
+        <router-link to="/" class="text-gray-300 hover:text-white" title="Explore">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l-4 8-4-4 8-4z"/></svg>
+        </router-link>
+        <router-link to="/watchlist" class="text-gray-300 hover:text-white" title="My shows">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6"><rect x="3" y="5" width="18" height="12" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9l5 3-5 3V9z"/></svg>
+        </router-link>
+        <router-link to="/calendar" class="text-gray-300 hover:text-white" title="Calendar">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6"><rect x="3" y="7" width="18" height="14" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 3v4M8 3v4M3 11h18"/></svg>
+        </router-link>
+        <router-link to="/notifications" class="text-gray-300 hover:text-white" title="Notifications">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        </router-link>
+      </div>
       <button class="mr-2">
         <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
