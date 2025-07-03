@@ -9,8 +9,12 @@ import {
   removeFromWatchlist, 
   isInWatchlist,
   addWatchedMovie,
-  isMovieWatched
+  isMovieWatched,
+  getUserFavorites,
+  getUserWatchlist,
+  getUserWatchedMovies
 } from '../utils/database';
+import { useTVDB } from '../utils/useTVDB';
 
 export interface Show {
   id: number;
@@ -276,8 +280,117 @@ export const useUserStore = defineStore('user', () => {
 
     try {
       isLoading.value = true;
-      // TODO: Implementar funciones para cargar listas completas desde la BD
-      // Por ahora usamos el caché local
+      error.value = null;
+
+      console.log('🔄 Cargando datos del usuario desde la BD...');
+      
+      // Usar el composable de TVDB
+      const tvdbComposable = useTVDB();
+      
+      // Asegurar que TVDB esté autenticado
+      if (!tvdbComposable.token.value) {
+        console.log('🔑 TVDB no está autenticado, inicializando...');
+        await tvdbComposable.loginAndFetchContent();
+      }
+      
+      // Cargar datos desde la BD
+      const [favoritesData, watchlistData, watchedData] = await Promise.all([
+        getUserFavorites(user.value.id),
+        getUserWatchlist(user.value.id),
+        getUserWatchedMovies(user.value.id)
+      ]);
+
+      // Procesar favoritos
+      const favoritesPromises = favoritesData.map(async (fav) => {
+        try {
+          if (fav.movie_id) {
+            const movieDetail = await tvdbComposable.fetchMovieDetails(fav.movie_id);
+            return movieDetail ? {
+              id: fav.movie_id,
+              name: movieDetail.name,
+              image: movieDetail.image,
+              type: 'movie' as const,
+              year: movieDetail.year,
+              ...movieDetail
+            } : null;
+          } else if (fav.series_id) {
+            const seriesDetail = await tvdbComposable.fetchSeriesDetails(fav.series_id);
+            return seriesDetail ? {
+              id: fav.series_id,
+              name: seriesDetail.name,
+              image: seriesDetail.image,
+              type: 'series' as const,
+              year: seriesDetail.year,
+              ...seriesDetail
+            } : null;
+          }
+        } catch (err) {
+          console.error('Error cargando detalles de favorito:', err);
+          return null;
+        }
+      });
+
+      // Procesar watchlist
+      const watchlistPromises = watchlistData.map(async (item) => {
+        try {
+          if (item.movie_id) {
+            const movieDetail = await tvdbComposable.fetchMovieDetails(item.movie_id);
+            return movieDetail ? {
+              id: item.movie_id,
+              name: movieDetail.name,
+              image: movieDetail.image,
+              type: 'movie' as const,
+              year: movieDetail.year,
+              ...movieDetail
+            } : null;
+          } else if (item.series_id) {
+            const seriesDetail = await tvdbComposable.fetchSeriesDetails(item.series_id);
+            return seriesDetail ? {
+              id: item.series_id,
+              name: seriesDetail.name,
+              image: seriesDetail.image,
+              type: 'series' as const,
+              year: seriesDetail.year,
+              ...seriesDetail
+            } : null;
+          }
+        } catch (err) {
+          console.error('Error cargando detalles de watchlist:', err);
+          return null;
+        }
+      });
+
+      // Procesar watched
+      const watchedPromises = watchedData.map(async (item) => {
+        try {
+          const movieDetail = await tvdbComposable.fetchMovieDetails(item.movie_id);
+          return movieDetail ? {
+            id: item.movie_id,
+            name: movieDetail.name,
+            image: movieDetail.image,
+            type: 'movie' as const,
+            year: movieDetail.year,
+            ...movieDetail
+          } : null;
+        } catch (err) {
+          console.error('Error cargando detalles de watched:', err);
+          return null;
+        }
+      });
+
+      // Resolver todas las promesas
+      const [favoritesResults, watchlistResults, watchedResults] = await Promise.all([
+        Promise.all(favoritesPromises),
+        Promise.all(watchlistPromises),
+        Promise.all(watchedPromises)
+      ]);
+
+      // Filtrar resultados null y actualizar el estado
+      favorites.value = favoritesResults.filter(Boolean) as Show[];
+      watchlist.value = watchlistResults.filter(Boolean) as Show[];
+      watched.value = watchedResults.filter(Boolean) as Show[];
+
+      console.log(`✅ Datos cargados: ${favorites.value.length} favoritos, ${watchlist.value.length} watchlist, ${watched.value.length} watched`);
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Error cargando datos del usuario';
       console.error('Error loading user data:', err);
@@ -302,6 +415,11 @@ export const useUserStore = defineStore('user', () => {
       clearUserData();
     }
   });
+
+  // Inicializar datos si el usuario ya está autenticado (por ejemplo desde localStorage)
+  if (isAuthenticated.value) {
+    loadUserData();
+  }
 
   return {
     // Estado

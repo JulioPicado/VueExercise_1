@@ -34,37 +34,100 @@ const goToDetails = (id: number, contentType: "movie" | "series") => {
 };
 
 // Funciones para manejar las listas del usuario
-const addToFavorites = (item: any) => {
-  const show: Show = {
-    id: item.id,
-    name: item.name,
-    image: item.image,
-    type: type,
-    year: item.year
-  };
-  userStore.addToFavorites(show);
+const toggleFavorites = async (item: any) => {
+  try {
+    const showData: Show = {
+      id: item.id,
+      name: item.name,
+      image: item.image,
+      type: type,
+      year: item.year
+    };
+    
+    console.log(`🔄 Toggle favoritos: ${item.name} (${type})`);
+    
+    // Verificar estado actual desde la BD (asíncrono)
+    const isCurrentlyFavorite = await userStore.checkIsFavorite(item.id, type);
+    
+    if (isCurrentlyFavorite) {
+      // Si ya está, quitarlo
+      await userStore.removeFromFavorites(item.id, type);
+      console.log(`❌ ${item.name} removido de favoritos`);
+    } else {
+      // Si no está, agregarlo
+      await userStore.addToFavorites(showData);
+      console.log(`✅ ${item.name} agregado a favoritos`);
+    }
+    
+    // Forzar actualización del caché local
+    await userStore.loadUserData();
+  } catch (error) {
+    console.error('Error en toggleFavorites:', error);
+  }
 };
 
-const addToWatchlist = (item: any) => {
-  const show: Show = {
-    id: item.id,
-    name: item.name,
-    image: item.image,
-    type: type,
-    year: item.year
-  };
-  userStore.addToWatchlist(show);
+const toggleWatchlist = async (item: any) => {
+  try {
+    const showData: Show = {
+      id: item.id,
+      name: item.name,
+      image: item.image,
+      type: type,
+      year: item.year
+    };
+    
+    console.log(`🔄 Toggle watchlist: ${item.name} (${type})`);
+    
+    // Verificar estado actual desde la BD (asíncrono)
+    const isCurrentlyInWatchlist = await userStore.checkIsInWatchlist(item.id, type);
+    
+    if (isCurrentlyInWatchlist) {
+      // Si ya está, quitarlo
+      await userStore.removeFromWatchlist(item.id, type);
+      console.log(`❌ ${item.name} removido de watchlist`);
+    } else {
+      // Si no está, agregarlo
+      await userStore.addToWatchlist(showData);
+      console.log(`✅ ${item.name} agregado a watchlist`);
+    }
+    
+    // Forzar actualización del caché local
+    await userStore.loadUserData();
+  } catch (error) {
+    console.error('Error en toggleWatchlist:', error);
+  }
 };
 
-const addToWatched = (item: any) => {
-  const show: Show = {
-    id: item.id,
-    name: item.name,
-    image: item.image,
-    type: type,
-    year: item.year
-  };
-  userStore.addToWatched(show);
+const toggleWatched = async (item: any) => {
+  try {
+    const showData: Show = {
+      id: item.id,
+      name: item.name,
+      image: item.image,
+      type: type,
+      year: item.year
+    };
+    
+    console.log(`🔄 Toggle watched: ${item.name} (${type})`);
+    
+    // Verificar estado actual desde la BD (asíncrono)
+    const isCurrentlyWatched = await userStore.checkIsWatched(item.id, type);
+    
+    if (isCurrentlyWatched) {
+      // Si ya está, quitarlo
+      await userStore.removeFromWatched(item.id, type);
+      console.log(`❌ ${item.name} removido de watched`);
+    } else {
+      // Si no está, agregarlo
+      await userStore.addToWatched(showData);
+      console.log(`✅ ${item.name} agregado a watched`);
+    }
+    
+    // Forzar actualización del caché local
+    await userStore.loadUserData();
+  } catch (error) {
+    console.error('Error en toggleWatched:', error);
+  }
 };
 
 const isFavorite = (item: any) => {
@@ -153,7 +216,7 @@ const isWatched = (item: any) => {
           <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
             <div class="flex space-x-2">
               <button
-                @click.stop="addToFavorites(item)"
+                @click.stop="toggleFavorites(item)"
                 :class="[
                   'p-2 rounded-full transition-colors',
                   isFavorite(item) 
@@ -165,7 +228,7 @@ const isWatched = (item: any) => {
                 ❤️
               </button>
               <button
-                @click.stop="addToWatchlist(item)"
+                @click.stop="toggleWatchlist(item)"
                 :class="[
                   'p-2 rounded-full transition-colors',
                   isInWatchlist(item) 
@@ -177,7 +240,7 @@ const isWatched = (item: any) => {
                 📺
               </button>
               <button
-                @click.stop="addToWatched(item)"
+                @click.stop="toggleWatched(item)"
                 :class="[
                   'p-2 rounded-full transition-colors',
                   isWatched(item) 
