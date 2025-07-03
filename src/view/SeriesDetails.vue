@@ -4,9 +4,10 @@ import { ref, onMounted, watch } from "vue";
 import { useTVDB } from "../utils/useTVDB";
 import { useUserStore } from "../stores/userStore";
 import type { Show } from "../stores/userStore";
+import EpisodesSection from "../components/EpisodesSection.vue";
 
 const route = useRoute();
-const { fetchSeriesDetails, isAuthenticated, loginAndFetchContent } = useTVDB();
+const { fetchSeriesDetails, fetchSeriesEpisodes, isAuthenticated, loginAndFetchContent } = useTVDB();
 const userStore = useUserStore();
 
 const seriesId = ref<string | string[]>(route.params.id);
@@ -14,12 +15,36 @@ const seriesDetails = ref<any | null>(null);
 const loadingDetails = ref(true);
 const errorDetails = ref<string | null>(null);
 
+// Estado para episodios
+const episodesData = ref<any | null>(null);
+const loadingEpisodes = ref(false);
+const errorEpisodes = ref<string | null>(null);
+
+const loadSeriesEpisodes = async (id: string | string[]) => {
+  loadingEpisodes.value = true;
+  errorEpisodes.value = null;
+  try {
+    const episodes = await fetchSeriesEpisodes(id as string);
+    episodesData.value = episodes;
+  } catch (err) {
+    errorEpisodes.value =
+      err instanceof Error
+        ? err.message
+        : "Error desconocido al cargar episodios.";
+    console.error("Error al cargar episodios de la serie:", err);
+  } finally {
+    loadingEpisodes.value = false;
+  }
+};
+
 const loadSeriesDetails = async (id: string | string[]) => {
   loadingDetails.value = true;
   errorDetails.value = null;
   try {
     const details = await fetchSeriesDetails(id as string);
     seriesDetails.value = details;
+    // Cargar episodios después de cargar detalles
+    await loadSeriesEpisodes(id);
   } catch (err) {
     errorDetails.value =
       err instanceof Error
@@ -178,6 +203,15 @@ const toggleFavorite = () => {
         </button>
       </div>
     </div>
+    
+    <!-- Sección de episodios para móvil -->
+    <div class="px-4 pb-6">
+      <EpisodesSection 
+        :episodesBySeasons="episodesData?.episodesBySeasons || {}"
+        :loading="loadingEpisodes"
+        :error="errorEpisodes"
+      />
+    </div>
   </div>
   <!-- Vista escritorio original -->
   <div class="hidden md:block">
@@ -299,6 +333,13 @@ const toggleFavorite = () => {
             </div>
           </div>
         </div>
+        
+        <!-- Sección de episodios para escritorio -->
+        <EpisodesSection 
+          :episodesBySeasons="episodesData?.episodesBySeasons || {}"
+          :loading="loadingEpisodes"
+          :error="errorEpisodes"
+        />
       </div>
     </div>
   </div>
