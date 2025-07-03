@@ -1,5 +1,6 @@
 // src/utils/useTVDB.ts
 import { ref } from "vue";
+//import { initDatabase } from "./database";
 
 export function useTVDB() {
   const apiKey = import.meta.env.VITE_THE_TVDB_API_KEY;
@@ -121,6 +122,11 @@ export function useTVDB() {
 
   const loginAndFetchContent = async () => {
     try {
+      // 🗄️ Inicializar base de datos automáticamente
+      //console.log('🔧 PRUEBA: loginAndFetchContent se está ejecutando');
+      //console.log('🔧 Inicializando base de datos...');
+      //await initDatabase();
+      
       // Validar que apiBaseUrl y apiKey existen
       if (!apiBaseUrl || !apiKey) {
         throw new Error('API base URL o API key no definida.');
