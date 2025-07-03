@@ -289,17 +289,13 @@ const handleImageError = (event: Event) => {
     transform: translateY(0);
   }
 }
-.custom-scrollbar-horizontal::-webkit-scrollbar {
-  height: 14px;
-  background: #000;
-  display: block !important;
-}
-.custom-scrollbar-horizontal::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 8px;
-}
 .custom-scrollbar-horizontal {
-  scrollbar-color: #888 #000;
-  scrollbar-width: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-shrink-0 {
+  width: 100%;
 }
 </style> 
