@@ -1,16 +1,46 @@
 <script setup lang="ts">
 import HeaderMenu from "./components/HeaderMenu.vue";
+import { useDatabase } from "./composables/useDatabase";
+
+// Inicializar la base de datos
+const { isInitialized, isLoading, error } = useDatabase();
+
+// Función para recargar la página
+const reloadPage = () => {
+  window.location.reload();
+};
 </script>
 
 <template>
   <div class="flex flex-col min-h-screen bg-[#353542] text-white font-sans">
+    <!-- Loading de base de datos -->
+    <div v-if="isLoading" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div class="bg-white text-black p-6 rounded-lg">
+        <div class="flex items-center gap-3">
+          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#e50914]"></div>
+          <span>Verificando base de datos...</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Error de base de datos -->
+    <div v-if="error" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div class="bg-red-100 text-red-800 p-6 rounded-lg max-w-md">
+        <h3 class="font-bold mb-2">Error de Base de Datos</h3>
+        <p class="mb-4">{{ error }}</p>
+        <button @click="reloadPage" class="bg-red-600 text-white px-4 py-2 rounded">
+          Recargar página
+        </button>
+      </div>
+    </div>
+
     <header v-if="!(['MovieDetails','MyShowsWatchlist','MyShowsWatched','MyShowsFavorites'].includes(($route.name || '') as string))">
       <HeaderMenu />
     </header>
 
     <main class="flex-1">
       <!-- router-view es donde Vue Router inyecta el componente de la ruta actual (HomeView o MovieDetails) -->
-      <router-view></router-view>
+      <router-view v-if="isInitialized"></router-view>
     </main>
 
     <!-- Footer de navegación solo en móvil -->

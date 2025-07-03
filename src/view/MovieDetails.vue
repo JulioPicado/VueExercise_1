@@ -137,10 +137,8 @@ watch(
 // Cargar token si no se ha hecho aún (ejecuta loginAndFetchContent si no hay token)
 onMounted(() => {
   if (!isAuthenticated.value) {
-    // Solo si no estamos ya autenticados
     loginAndFetchContent();
   }
-  userStore.loadFromLocalStorage();
 });
 
 watch(movieDetails, (val) => {

@@ -11,6 +11,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  password: string;
   created_at: string;
 }
 
@@ -53,10 +54,27 @@ export interface UserWatchedEpisode {
 
 
 
+// 🚀 Función para verificar si la base de datos existe
+export const checkDatabaseExists = async (): Promise<boolean> => {
+  try {
+    const result = await client.execute(`SELECT name FROM sqlite_master WHERE type='table' AND name='users'`);
+    return result.rows.length > 0;
+  } catch (error) {
+    return false;
+  }
+};
+
 // 🚀 Función para inicializar la base de datos completa
 export const initDatabase = async () => {
   try {
-    console.log('🔧 Inicializando base de datos...');
+    // Verificar si la base de datos ya existe
+    const exists = await checkDatabaseExists();
+    if (exists) {
+      console.log('✅ Base de datos ya existe, omitiendo inicialización');
+      return { success: true, message: 'Base de datos ya existe' };
+    }
+
+    console.log('🔧 Inicializando base de datos por primera vez...');
 
     // 1. Tabla de usuarios
     await client.execute(`
@@ -64,6 +82,7 @@ export const initDatabase = async () => {
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
         created_at TEXT NOT NULL
       )
     `);
@@ -145,6 +164,9 @@ export const initDatabase = async () => {
 
     console.log('🎉 ¡Base de datos inicializada correctamente!');
     
+    // Crear usuario demo para pruebas (opcional)
+    await createDemoUser();
+    
     return { success: true, message: 'Base de datos creada exitosamente' };
   } catch (error) {
     console.error('❌ Error inicializando la base de datos:', error);
@@ -157,14 +179,15 @@ export const createUser = async (user: Omit<User, 'id' | 'created_at'>): Promise
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   await client.execute({
-    sql: 'INSERT INTO users (id, name, email, created_at) VALUES (?, ?, ?, ?)',
-    args: [id, user.name, user.email, now]
+    sql: 'INSERT INTO users (id, name, email, password, created_at) VALUES (?, ?, ?, ?, ?)',
+    args: [id, user.name, user.email, user.password, now]
   });
   
   return {
     id,
     name: user.name,
     email: user.email,
+    password: user.password,
     created_at: now
   };
 };
@@ -189,26 +212,51 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
 
 // Funciones para favoritos
 export const addFavorite = async (userId: string, movieId?: number, seriesId?: number): Promise<void> => {
+  // Verificar si ya existe
+  const exists = await isFavorite(userId, movieId, seriesId);
+  if (exists) {
+    console.log('⚠️ Favorito ya existe, no se agrega duplicado');
+    return;
+  }
+  
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   await client.execute({
-    sql: 'INSERT OR REPLACE INTO user_favorites (id, user_id, movie_id, series_id, created_at) VALUES (?, ?, ?, ?, ?)',
+    sql: 'INSERT INTO user_favorites (id, user_id, movie_id, series_id, created_at) VALUES (?, ?, ?, ?, ?)',
     args: [id, userId, movieId || null, seriesId || null, now]
   });
+  console.log('✅ Favorito agregado a BD');
 };
 
 export const removeFavorite = async (userId: string, movieId?: number, seriesId?: number): Promise<void> => {
-  await client.execute({
-    sql: 'DELETE FROM user_favorites WHERE user_id = ? AND (movie_id = ? OR series_id = ?)',
-    args: [userId, movieId || null, seriesId || null]
-  });
+  if (movieId) {
+    await client.execute({
+      sql: 'DELETE FROM user_favorites WHERE user_id = ? AND movie_id = ?',
+      args: [userId, movieId]
+    });
+  } else if (seriesId) {
+    await client.execute({
+      sql: 'DELETE FROM user_favorites WHERE user_id = ? AND series_id = ?',
+      args: [userId, seriesId]
+    });
+  }
 };
 
 export const isFavorite = async (userId: string, movieId?: number, seriesId?: number): Promise<boolean> => {
-  const result = await client.execute({
-    sql: 'SELECT COUNT(*) as count FROM user_favorites WHERE user_id = ? AND (movie_id = ? OR series_id = ?)',
-    args: [userId, movieId || null, seriesId || null]
-  });
+  let result;
+  if (movieId) {
+    result = await client.execute({
+      sql: 'SELECT COUNT(*) as count FROM user_favorites WHERE user_id = ? AND movie_id = ?',
+      args: [userId, movieId]
+    });
+  } else if (seriesId) {
+    result = await client.execute({
+      sql: 'SELECT COUNT(*) as count FROM user_favorites WHERE user_id = ? AND series_id = ?',
+      args: [userId, seriesId]
+    });
+  } else {
+    return false;
+  }
   
   return (result.rows[0] as any).count > 0;
 };
@@ -228,6 +276,64 @@ export const isMovieWatched = async (userId: string, movieId: number): Promise<b
     sql: 'SELECT COUNT(*) as count FROM user_watched_movies WHERE user_id = ? AND movie_id = ?',
     args: [userId, movieId]
   });
+  
+  return (result.rows[0] as any).count > 0;
+};
+
+export const removeWatchedMovie = async (userId: string, movieId: number): Promise<void> => {
+  await client.execute({
+    sql: 'DELETE FROM user_watched_movies WHERE user_id = ? AND movie_id = ?',
+    args: [userId, movieId]
+  });
+};
+
+// Funciones para watchlist
+export const addToWatchlist = async (userId: string, movieId?: number, seriesId?: number): Promise<void> => {
+  // Verificar si ya existe
+  const exists = await isInWatchlist(userId, movieId, seriesId);
+  if (exists) {
+    console.log('⚠️ Item ya está en watchlist, no se agrega duplicado');
+    return;
+  }
+  
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await client.execute({
+    sql: 'INSERT INTO user_watchlist (id, user_id, movie_id, series_id, added_at) VALUES (?, ?, ?, ?, ?)',
+    args: [id, userId, movieId || null, seriesId || null, now]
+  });
+  console.log('✅ Item agregado a watchlist en BD');
+};
+
+export const removeFromWatchlist = async (userId: string, movieId?: number, seriesId?: number): Promise<void> => {
+  if (movieId) {
+    await client.execute({
+      sql: 'DELETE FROM user_watchlist WHERE user_id = ? AND movie_id = ?',
+      args: [userId, movieId]
+    });
+  } else if (seriesId) {
+    await client.execute({
+      sql: 'DELETE FROM user_watchlist WHERE user_id = ? AND series_id = ?',
+      args: [userId, seriesId]
+    });
+  }
+};
+
+export const isInWatchlist = async (userId: string, movieId?: number, seriesId?: number): Promise<boolean> => {
+  let result;
+  if (movieId) {
+    result = await client.execute({
+      sql: 'SELECT COUNT(*) as count FROM user_watchlist WHERE user_id = ? AND movie_id = ?',
+      args: [userId, movieId]
+    });
+  } else if (seriesId) {
+    result = await client.execute({
+      sql: 'SELECT COUNT(*) as count FROM user_watchlist WHERE user_id = ? AND series_id = ?',
+      args: [userId, seriesId]
+    });
+  } else {
+    return false;
+  }
   
   return (result.rows[0] as any).count > 0;
 };
@@ -270,6 +376,64 @@ export const getSeriesProgress = async (userId: string, seriesId: number): Promi
   });
   
   return result.rows as unknown as { seasonNumber: number, watchedCount: number }[];
+};
+
+// Funciones para cargar listas completas del usuario
+export const getUserFavorites = async (userId: string) => {
+  const result = await client.execute({
+    sql: 'SELECT movie_id, series_id, created_at FROM user_favorites WHERE user_id = ? ORDER BY created_at DESC',
+    args: [userId]
+  });
+  
+  return result.rows as unknown as { movie_id: number | null, series_id: number | null, created_at: string }[];
+};
+
+export const getUserWatchlist = async (userId: string) => {
+  const result = await client.execute({
+    sql: 'SELECT movie_id, series_id, added_at FROM user_watchlist WHERE user_id = ? ORDER BY added_at DESC',
+    args: [userId]
+  });
+  
+  return result.rows as unknown as { movie_id: number | null, series_id: number | null, added_at: string }[];
+};
+
+export const getUserWatchedMovies = async (userId: string) => {
+  const result = await client.execute({
+    sql: 'SELECT movie_id, watched_at, rating, notes FROM user_watched_movies WHERE user_id = ? ORDER BY watched_at DESC',
+    args: [userId]
+  });
+  
+  return result.rows as unknown as { movie_id: number, watched_at: string, rating: number | null, notes: string | null }[];
+};
+
+// Función para crear usuario demo para pruebas
+export const createDemoUser = async (): Promise<void> => {
+  try {
+    // Verificar si ya existe el usuario demo
+    const existingUser = await getUserByEmail('demo@example.com');
+    if (existingUser) {
+      console.log('👤 Usuario demo ya existe');
+      return;
+    }
+    
+    // Crear usuario demo con contraseña hasheada
+    const encoder = new TextEncoder();
+    const data = encoder.encode('demo123');
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    const hashedPassword = Array.from(new Uint8Array(hash))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    await createUser({
+      name: 'Usuario Demo',
+      email: 'demo@example.com',
+      password: hashedPassword
+    });
+    
+    console.log('👤 Usuario demo creado: demo@example.com / demo123');
+  } catch (error) {
+    console.error('❌ Error creando usuario demo:', error);
+  }
 };
 
 export { client }; 

@@ -44,7 +44,7 @@
               </div>
               <div class="flex flex-col gap-1 items-end ml-2">
                 <button 
-                  @click.stop="addToFavorites(movie)"
+                  @click.stop="toggleFavorites(movie)"
                   :class="[
                     'p-1 rounded-full text-xs',
                     isFavorite(movie) ? 'text-red-500 bg-gray-900' : 'text-gray-400 hover:text-red-500 bg-gray-800 hover:bg-gray-700'
@@ -54,7 +54,7 @@
                   ❤️
                 </button>
                 <button 
-                  @click.stop="addToWatchlist(movie)"
+                  @click.stop="toggleWatchlist(movie)"
                   :class="[
                     'p-1 rounded-full text-xs',
                     isInWatchlist(movie) ? 'text-blue-500 bg-gray-900' : 'text-gray-400 hover:text-blue-500 bg-gray-800 hover:bg-gray-700'
@@ -108,7 +108,7 @@
               </div>
               <div class="flex flex-col gap-1 items-end ml-2">
                 <button 
-                  @click.stop="addToFavorites(serie)"
+                  @click.stop="toggleFavorites(serie)"
                   :class="[
                     'p-1 rounded-full text-xs',
                     isFavorite(serie) ? 'text-red-500 bg-gray-900' : 'text-gray-400 hover:text-red-500 bg-gray-800 hover:bg-gray-700'
@@ -118,7 +118,7 @@
                   ❤️
                 </button>
                 <button 
-                  @click.stop="addToWatchlist(serie)"
+                  @click.stop="toggleWatchlist(serie)"
                   :class="[
                     'p-1 rounded-full text-xs',
                     isInWatchlist(serie) ? 'text-blue-500 bg-gray-900' : 'text-gray-400 hover:text-blue-500 bg-gray-800 hover:bg-gray-700'
@@ -190,26 +190,68 @@ const selectShow = (show: any) => {
   }
 };
 
-const addToFavorites = (show: any) => {
-  const showData: Show = {
-    id: show.id,
-    name: show.name,
-    image: show.image,
-    type: show.type,
-    year: show.year
-  };
-  userStore.addToFavorites(showData);
+const toggleFavorites = async (show: any) => {
+  try {
+    const showData: Show = {
+      id: show.id,
+      name: show.name,
+      image: show.image,
+      type: show.type,
+      year: show.year
+    };
+    
+    console.log(`🔄 Toggle favoritos: ${show.name} (${show.type})`);
+    
+    // Verificar estado actual desde la BD (asíncrono)
+    const isCurrentlyFavorite = await userStore.checkIsFavorite(show.id, show.type);
+    
+    if (isCurrentlyFavorite) {
+      // Si ya está, quitarlo
+      await userStore.removeFromFavorites(show.id, show.type);
+      console.log(`❌ ${show.name} removido de favoritos`);
+    } else {
+      // Si no está, agregarlo
+      await userStore.addToFavorites(showData);
+      console.log(`✅ ${show.name} agregado a favoritos`);
+    }
+    
+    // Forzar actualización del caché local
+    await userStore.loadUserData();
+  } catch (error) {
+    console.error('Error en toggleFavorites:', error);
+  }
 };
 
-const addToWatchlist = (show: any) => {
-  const showData: Show = {
-    id: show.id,
-    name: show.name,
-    image: show.image,
-    type: show.type,
-    year: show.year
-  };
-  userStore.addToWatchlist(showData);
+const toggleWatchlist = async (show: any) => {
+  try {
+    const showData: Show = {
+      id: show.id,
+      name: show.name,
+      image: show.image,
+      type: show.type,
+      year: show.year
+    };
+    
+    console.log(`🔄 Toggle watchlist: ${show.name} (${show.type})`);
+    
+    // Verificar estado actual desde la BD (asíncrono)
+    const isCurrentlyInWatchlist = await userStore.checkIsInWatchlist(show.id, show.type);
+    
+    if (isCurrentlyInWatchlist) {
+      // Si ya está, quitarlo
+      await userStore.removeFromWatchlist(show.id, show.type);
+      console.log(`❌ ${show.name} removido de watchlist`);
+    } else {
+      // Si no está, agregarlo
+      await userStore.addToWatchlist(showData);
+      console.log(`✅ ${show.name} agregado a watchlist`);
+    }
+    
+    // Forzar actualización del caché local
+    await userStore.loadUserData();
+  } catch (error) {
+    console.error('Error en toggleWatchlist:', error);
+  }
 };
 
 const isFavorite = (show: any) => {
