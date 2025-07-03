@@ -31,7 +31,28 @@
         class="flex-1 bg-transparent outline-none text-white placeholder-gray-400 text-base px-2"
         :disabled="!isAuthenticated || loading"
       />
-      <img src="/avatar.png" alt="Avatar" class="w-8 h-8 rounded-full ml-2" />
+      
+      <!-- Botones de autenticación -->
+      <div class="flex items-center ml-2 gap-2">
+        <div v-if="authUser" class="flex items-center gap-2">
+          <span class="text-white text-sm hidden md:block">{{ authUser.name }}</span>
+          <img src="/avatar.png" alt="Avatar" class="w-8 h-8 rounded-full" />
+          <button @click="handleLogout" class="text-gray-300 hover:text-white text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+        </div>
+        <div v-else class="flex items-center gap-2">
+          <router-link to="/login" class="text-white bg-[#e50914] hover:bg-[#cc0812] px-3 py-1 rounded-md text-sm font-medium transition-colors">
+            Login
+          </router-link>
+          <router-link to="/register" class="text-gray-300 hover:text-white px-3 py-1 rounded-md text-sm font-medium transition-colors border border-gray-600 hover:border-gray-400">
+            Registro
+          </router-link>
+        </div>
+      </div>
+      
       <!-- Resultados de búsqueda -->
       <div v-if="showResults && searchQuery" class="absolute left-0 right-0 top-14 z-50 bg-[#23232b] rounded-xl shadow-2xl max-h-96 min-w-full border border-gray-700 animate-fade-in custom-scrollbar">
         <SearchResults
@@ -51,10 +72,12 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useUserStore } from '../stores/userStore';
 import { useTVDB } from '../utils/useTVDB';
+import { useAuth } from '../composables/useAuth';
 import SearchResults from './SearchResults.vue';
 
 const userStore = useUserStore();
 const { searchShows, isAuthenticated, loading, loginAndFetchContent } = useTVDB();
+const { user: authUser, logout } = useAuth();
 
 const favoritesCount = computed(() => userStore.favoritesCount);
 const watchlistCount = computed(() => userStore.watchlistCount);
@@ -102,6 +125,11 @@ const handleBlur = () => {
   setTimeout(() => {
     showResults.value = false;
   }, 200);
+};
+
+// Función para manejar el logout
+const handleLogout = () => {
+  logout();
 };
 
 // Limpiar timeout al desmontar

@@ -84,7 +84,8 @@ export function useTVDB() {
     }
 
     try {
-      const res = await fetch(`${apiBaseUrl}/movies/${movieId}/extended`, {
+      // Intentar primero con extended, como las series
+      const res = await fetch(`${apiBaseUrl}/movies/${movieId}/extended?meta=translations&short=true`, {
         headers: {
           Authorization: `Bearer ${token.value}`,
           accept: "application/json",
@@ -92,15 +93,47 @@ export function useTVDB() {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(
-          `Detalles de película: ${err.message} (Status: ${res.status})`
-        );
+        // Si falla, intentar sin los parámetros adicionales
+        console.warn(`Primera llamada de película falló (${res.status}), intentando endpoint básico...`);
+        
+        const basicRes = await fetch(`${apiBaseUrl}/movies/${movieId}/extended`, {
+          headers: {
+            Authorization: `Bearer ${token.value}`,
+            accept: "application/json",
+          },
+        });
+
+        if (!basicRes.ok) {
+          const err = await basicRes.json().catch(() => ({ message: 'Error desconocido' }));
+          throw new Error(
+            `Detalles de película: ${err.message} (Status: ${basicRes.status})`
+          );
+        }
+
+        const basicJson = await basicRes.json();
+        const movieDetail = basicJson.data;
+
+        // Procesar imágenes
+        if (movieDetail.image) {
+          movieDetail.image = getFullImageUrl(movieDetail.image);
+        }
+
+        if (movieDetail.artworks && movieDetail.artworks.length > 0) {
+          movieDetail.artworks = movieDetail.artworks.map((artwork: any) => ({
+            ...artwork,
+            image: getFullImageUrl(artwork.image),
+            thumbnail: getFullImageUrl(artwork.thumbnail),
+          }));
+        }
+
+        console.log('✅ Detalles de película cargados con endpoint básico');
+        return movieDetail;
       }
 
       const json = await res.json();
       const movieDetail = json.data;
 
+      // Procesar imágenes
       if (movieDetail.image) {
         movieDetail.image = getFullImageUrl(movieDetail.image);
       }
@@ -113,6 +146,7 @@ export function useTVDB() {
         }));
       }
 
+      console.log('✅ Detalles de película cargados con endpoint extendido');
       return movieDetail;
     } catch (err) {
       console.error("Error al obtener detalles de la película:", err);
