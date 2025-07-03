@@ -8,7 +8,7 @@
       </div>
 
       <div v-else-if="favorites.length === 0" class="text-center py-16">
-        <div class="text-6xl mb-4">❤️</div>
+        <div class="text-6xl mb-4">⭐</div>
         <h2 class="text-2xl font-semibold mb-4">No tienes favoritos aún</h2>
         <p class="text-gray-400 mb-8">Explora películas y series para agregar a tus favoritos</p>
         <router-link 
@@ -39,7 +39,7 @@
                 class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full transition-colors"
                 title="Quitar de favoritos"
               >
-                ❤️
+              ⭐
               </button>
             </div>
             <div class="absolute bottom-2 left-2">

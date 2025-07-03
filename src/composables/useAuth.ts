@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { createUser, getUserByEmail, type User } from '../utils/database';
+import { createUser, getUserByEmail, createDemoUser, updateUserPassword, type User } from '../utils/database';
 
 export interface AuthUser {
   id: string;
@@ -70,20 +70,35 @@ export const useAuth = () => {
       isLoading.value = true;
       error.value = null;
       
+      console.log('🔐 Iniciando proceso de login...');
+      console.log('📧 Email:', credentials.email);
+      
       // Buscar usuario por email
       const foundUser = await getUserByEmail(credentials.email);
       
       if (!foundUser) {
+        console.log('❌ Usuario no encontrado en BD');
         error.value = 'Usuario no encontrado';
         return false;
       }
       
+      console.log('✅ Usuario encontrado:', foundUser.name);
+      console.log('🔒 Contraseña en BD (primeros 20 chars):', foundUser.password.substring(0, 20) + '...');
+      
       // Verificar contraseña
       const hashedPassword = await hashPassword(credentials.password);
+      console.log('🔑 Contraseña hasheada (primeros 20 chars):', hashedPassword.substring(0, 20) + '...');
+      console.log('🔍 ¿Coinciden?', foundUser.password === hashedPassword);
+      
       if (foundUser.password !== hashedPassword) {
+        console.log('❌ Contraseñas no coinciden');
+        console.log('📝 BD:', foundUser.password);
+        console.log('📝 Calculada:', hashedPassword);
         error.value = 'Contraseña incorrecta';
         return false;
       }
+      
+      console.log('✅ Login exitoso');
       
       // Crear usuario sin contraseña para el estado local
       const userWithoutPassword = {
@@ -98,6 +113,7 @@ export const useAuth = () => {
       
       return true;
     } catch (err) {
+      console.error('❌ Error en login:', err);
       error.value = err instanceof Error ? err.message : 'Error al iniciar sesión';
       return false;
     } finally {
@@ -173,8 +189,52 @@ export const useAuth = () => {
     error.value = null;
   };
   
+  // Función para forzar actualización del usuario demo (temporal para debugging)
+  const fixDemoUser = async () => {
+    try {
+      console.log('🔧 Forzando actualización del usuario demo...');
+      await createDemoUser();
+      console.log('✅ Usuario demo verificado/actualizado');
+    } catch (error) {
+      console.error('❌ Error actualizando usuario demo:', error);
+    }
+  };
+  
+  // Función para actualizar contraseña de usuario (temporal para debugging)
+  const resetUserPassword = async (email: string, newPassword: string) => {
+    try {
+      console.log(`🔧 Actualizando contraseña para ${email}...`);
+      const success = await updateUserPassword(email, newPassword);
+      if (success) {
+        console.log('✅ Contraseña actualizada correctamente');
+      } else {
+        console.log('❌ No se pudo actualizar la contraseña');
+      }
+      return success;
+    } catch (error) {
+      console.error('❌ Error actualizando contraseña:', error);
+      return false;
+    }
+  };
+  
   // Inicializar
   loadUser();
+  
+  // Asegurar que el usuario demo esté correctamente configurado
+  createDemoUser().catch(err => console.error('Error inicializando usuario demo:', err));
+  
+  // Exponer funciones de debugging en desarrollo
+  if (typeof window !== 'undefined' && import.meta.env.DEV) {
+    (window as any).authDebug = {
+      fixDemoUser,
+      resetUserPassword,
+      hashPassword
+    };
+    console.log('🔧 Funciones de debugging disponibles en window.authDebug');
+    console.log('   - window.authDebug.fixDemoUser()');
+    console.log('   - window.authDebug.resetUserPassword(email, password)');
+    console.log('   - window.authDebug.hashPassword(password)');
+  }
   
   return {
     // Estado
@@ -188,5 +248,9 @@ export const useAuth = () => {
     register,
     logout,
     clearError,
+    
+    // Debugging (temporal)
+    fixDemoUser,
+    resetUserPassword,
   };
 }; 

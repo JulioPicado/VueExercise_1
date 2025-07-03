@@ -34,7 +34,7 @@ const reloadPage = () => {
       </div>
     </div>
 
-    <header v-if="!(['MovieDetails','MyShowsWatchlist','MyShowsWatched','MyShowsFavorites'].includes(($route.name || '') as string))">
+    <header v-if="!(['MovieDetails','SeriesDetails','MyShowsWatchlist','MyShowsWatched','MyShowsFavorites'].includes(($route.name || '') as string))">
       <HeaderMenu />
     </header>
 

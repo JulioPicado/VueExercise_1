@@ -225,7 +225,7 @@ const isWatched = (item: any) => {
                 ]"
                 :title="isFavorite(item) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
               >
-                ❤️
+              ⭐
               </button>
               <button
                 @click.stop="toggleWatchlist(item)"

@@ -9,10 +9,15 @@ import {
   removeFromWatchlist, 
   isInWatchlist,
   addWatchedMovie,
+  removeWatchedMovie,
   isMovieWatched,
+  addWatchedSeries,
+  removeWatchedSeries,
+  isSeriesWatched,
   getUserFavorites,
   getUserWatchlist,
-  getUserWatchedMovies
+  getUserWatchedMovies,
+  getUserWatchedSeries
 } from '../utils/database';
 import { useTVDB } from '../utils/useTVDB';
 
@@ -211,11 +216,14 @@ export const useUserStore = defineStore('user', () => {
       isLoading.value = true;
       error.value = null;
 
-      // Agregar a la base de datos (solo películas por ahora)
+      // Agregar a la base de datos
       if (show.type === 'movie') {
         await addWatchedMovie(user.value.id, show.id, rating, notes);
+        console.log(`✅ Película ${show.id} agregada a watched en BD`);
+      } else if (show.type === 'series') {
+        await addWatchedSeries(user.value.id, show.id);
+        console.log(`✅ Serie ${show.id} agregada a watched en BD`);
       }
-      // Para series necesitaríamos manejar episodios individualmente
 
       // Actualizar caché local
       if (!watched.value.find(item => item.id === show.id && item.type === show.type)) {
@@ -239,9 +247,18 @@ export const useUserStore = defineStore('user', () => {
       isLoading.value = true;
       error.value = null;
 
-      // Por ahora solo removemos del caché local
-      // TODO: Implementar remove de watched en la BD
+      // Quitar de la base de datos
+      if (type === 'movie') {
+        await removeWatchedMovie(user.value.id, showId);
+        console.log(`✅ Película ${showId} removida de watched en BD`);
+      } else if (type === 'series') {
+        await removeWatchedSeries(user.value.id, showId);
+        console.log(`✅ Serie ${showId} removida de watched en BD`);
+      }
+
+      // Actualizar caché local
       watched.value = watched.value.filter(item => !(item.id === showId && item.type === type));
+      console.log(`✅ ${type} ${showId} removida del caché local`);
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Error al quitar de vistas';
       console.error('Error removing from watched:', err);
@@ -258,8 +275,9 @@ export const useUserStore = defineStore('user', () => {
     try {
       if (type === 'movie') {
         return await isMovieWatched(user.value.id, showId);
+      } else if (type === 'series') {
+        return await isSeriesWatched(user.value.id, showId);
       }
-      // Para series necesitaríamos verificar episodios
       return false;
     } catch (err) {
       console.error('Error checking watched:', err);
@@ -294,10 +312,11 @@ export const useUserStore = defineStore('user', () => {
       }
       
       // Cargar datos desde la BD
-      const [favoritesData, watchlistData, watchedData] = await Promise.all([
+      const [favoritesData, watchlistData, watchedMoviesData, watchedSeriesData] = await Promise.all([
         getUserFavorites(user.value.id),
         getUserWatchlist(user.value.id),
-        getUserWatchedMovies(user.value.id)
+        getUserWatchedMovies(user.value.id),
+        getUserWatchedSeries(user.value.id)
       ]);
 
       // Procesar favoritos
@@ -360,8 +379,8 @@ export const useUserStore = defineStore('user', () => {
         }
       });
 
-      // Procesar watched
-      const watchedPromises = watchedData.map(async (item) => {
+      // Procesar watched movies
+      const watchedMoviesPromises = watchedMoviesData.map(async (item) => {
         try {
           const movieDetail = await tvdbComposable.fetchMovieDetails(item.movie_id);
           return movieDetail ? {
@@ -373,22 +392,41 @@ export const useUserStore = defineStore('user', () => {
             ...movieDetail
           } : null;
         } catch (err) {
-          console.error('Error cargando detalles de watched:', err);
+          console.error('Error cargando detalles de watched movie:', err);
+          return null;
+        }
+      });
+
+      // Procesar watched series
+      const watchedSeriesPromises = watchedSeriesData.map(async (item) => {
+        try {
+          const seriesDetail = await tvdbComposable.fetchSeriesDetails(item.series_id);
+          return seriesDetail ? {
+            id: item.series_id,
+            name: seriesDetail.name,
+            image: seriesDetail.image,
+            type: 'series' as const,
+            year: seriesDetail.year,
+            ...seriesDetail
+          } : null;
+        } catch (err) {
+          console.error('Error cargando detalles de watched series:', err);
           return null;
         }
       });
 
       // Resolver todas las promesas
-      const [favoritesResults, watchlistResults, watchedResults] = await Promise.all([
+      const [favoritesResults, watchlistResults, watchedMoviesResults, watchedSeriesResults] = await Promise.all([
         Promise.all(favoritesPromises),
         Promise.all(watchlistPromises),
-        Promise.all(watchedPromises)
+        Promise.all(watchedMoviesPromises),
+        Promise.all(watchedSeriesPromises)
       ]);
 
       // Filtrar resultados null y actualizar el estado
       favorites.value = favoritesResults.filter(Boolean) as Show[];
       watchlist.value = watchlistResults.filter(Boolean) as Show[];
-      watched.value = watchedResults.filter(Boolean) as Show[];
+      watched.value = [...watchedMoviesResults, ...watchedSeriesResults].filter(Boolean) as Show[];
 
       console.log(`✅ Datos cargados: ${favorites.value.length} favoritos, ${watchlist.value.length} watchlist, ${watched.value.length} watched`);
     } catch (err) {
