@@ -268,7 +268,7 @@ import { useTVDB } from '../utils/useTVDB';
 
 const router = useRouter();
 const userStore = useUserStore();
-const { fetchSeriesEpisodes } = useTVDB();
+const { fetchSeriesEpisodes, loginAndFetchContent, token } = useTVDB();
 const searchQuery = ref('');
 const activeTab = ref<'tv-series' | 'movies'>('tv-series');
 const activeList = ref<'watchlist' | 'watched' | 'favorites'>('watchlist');
@@ -352,6 +352,23 @@ const loadSeriesProgress = async () => {
     return;
   }
   
+  // Si no hay token, autenticar
+  if (!token.value) {
+    console.log('🔐 No hay token TVDB, autenticando...');
+    await loginAndFetchContent();
+    
+    // Guardar token en localStorage para que persista
+    if (token.value) {
+      console.log('💾 Guardando token en localStorage');
+      localStorage.setItem('tvdb_token', token.value);
+    }
+  }
+  
+  if (!token.value) {
+    console.log('❌ No se pudo obtener token TVDB');
+    return;
+  }
+  
   const series = userStore.watchlist.filter(show => show.type === 'series');
   console.log(`🎭 Cargando progreso para ${series.length} series:`, series.map(s => ({ id: s.id, name: s.name })));
   
@@ -408,6 +425,13 @@ onMounted(async () => {
     favorites: userStore.favorites.length,
     watched: userStore.watched.length
   });
+  
+  // Cargar token desde localStorage si existe
+  const savedToken = localStorage.getItem('tvdb_token');
+  if (savedToken && !token.value) {
+    console.log('🔄 Cargando token desde localStorage');
+    token.value = savedToken;
+  }
   
   // Cargar progreso de series
   await loadSeriesProgress();
